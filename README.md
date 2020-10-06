@@ -1,2 +1,2 @@
 # Random Tables
-This application will allow users to store and roll on tables and a hosted website.
+This web application will allow users to store, share, and roll on random tables.
