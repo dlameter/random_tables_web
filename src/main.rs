@@ -1,22 +1,50 @@
 use std::io::prelude::*;
 use std::fs;
-use std::fs::{File, DirEntry};
+use std::fs::{File};
+use std::ops::Deref;
 use std::path::Path;
+use std::sync::Arc;
 
 use warp::{http::Uri, Filter};
 use liquid;
+use liquid::*;
 
 #[tokio::main]
 async fn main() {
     let compiler = construct_liquid_complier();
+
+    // Build parser
+    let parser = ParserBuilder::with_stdlib()
+        .partials(compiler)
+        .build()
+        .unwrap();
+    let parser = Arc::new(parser);
+
+    let globals = object!({"empty": "empty?"});
+    let template = parser.parse("{% include './_includes/test.html' %}\ntesting templating.")
+        .unwrap();
+
+    let output = template.render(&globals).unwrap();
+    println!("Test liquid templating:\n{}", output);
+
+
+    let template_file = move |file_path| render_file(parser.clone(), file_path);
+
+
+
+    let string = "This is a test string to place into a filter";
     
     let index = warp::path("index.html").and(warp::fs::file("index.html"));
     let index_redirect = warp::path::end().map(|| warp::redirect(Uri::from_static("/index.html")));
 
+    let test = warp::path("test")
+        .map(|| Path::new("index.html"))
+        .map(template_file);
+
     let hello = warp::path!("hello" / String)
         .map(|name| format!("Hello, {}!", name));
 
-    let routes = warp::get().and(index.or(index_redirect).or(hello));
+    let routes = warp::get().and(index.or(index_redirect).or(hello).or(test));
 
     warp::serve(routes)
         .run(([127,0,0,1], 3030))
@@ -81,4 +109,16 @@ fn get_file_contents(path: &std::path::Path) -> Result<String, String> {
         },
         Err(_) => Err(format!("Failed to read the contents of file: {}", path_str)),
     }
+}
+
+fn render_file(liquid_parser: Arc<liquid::Parser>, template_path: &std::path::Path/*, globals, &Object*/) -> impl warp::Reply {
+    let globals = object!({"empty": "empty?"});
+
+    let template = liquid_parser.parse_file(template_path)
+        .unwrap();
+
+    let output = template.render(&globals).unwrap();
+    println!("Test liquid templating:\n{}", output);
+
+    warp::reply::html(output)
 }
