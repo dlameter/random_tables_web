@@ -47,6 +47,14 @@ async fn main() {
         println!("{} = {}", key, value);
     }
 
+    let layouts = create_layout_collection().unwrap();
+    for (layout_name, layout_metadata) in layouts.iter() {
+        println!("Metadata of layout {}:", layout_name);
+        for (key, value) in layout_metadata {
+            println!("{} = {}", key, value);
+        }
+    }
+
     // end Testing code
 
     
@@ -111,11 +119,10 @@ fn add_files_to_compiler(compiler: &mut liquid::partials::EagerCompiler::<liquid
     Ok(())
 }
 
-/*
 fn create_layout_collection() -> std::io::Result<HashMap<String, HashMap<String, String>>> {
     let mut layouts = HashMap::new();
 
-    let dir = Path::new("./_layouts/");
+    let dir = Path::new("./_layout/");
 
     if dir.is_dir() {
         for entry in fs::read_dir(dir)? {
@@ -123,15 +130,14 @@ fn create_layout_collection() -> std::io::Result<HashMap<String, HashMap<String,
             let path = entry.path();
 
             match add_file_to_layout_collection(&mut layouts, &path) {
-                Ok(_) =>,
-                Err(_) => println!("Failed to add layout file to layout collection."),
+                Ok(_) => (),
+                Err(e) => println!("Failed to add layout file to layout collection. Error text: {}", e),
             }
         }
     }
 
-    layouts
+    Ok(layouts)
 }
-*/
 
 fn add_file_to_layout_collection(layouts: &mut HashMap<String, HashMap<String,String>>, file_path: &std::path::Path) -> Result<(), String> {
     let file_stem: String = match file_path.file_stem().unwrap().to_os_string().into_string() {
