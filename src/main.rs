@@ -112,7 +112,7 @@ fn add_files_to_compiler(compiler: &mut liquid::partials::EagerCompiler::<liquid
 }
 
 /*
-fn create_layout_collection() -> std::io::Result<HashMap<String, String>> {
+fn create_layout_collection() -> std::io::Result<HashMap<String, HashMap<String, String>>> {
     let mut layouts = HashMap::new();
 
     let dir = Path::new("./_layouts/");
@@ -131,14 +131,23 @@ fn create_layout_collection() -> std::io::Result<HashMap<String, String>> {
 
     layouts
 }
+*/
 
-fn add_file_to_layout_collection(layouts: &mut HashMap<String, String>, file_path: &std::path::Path) -> Result<(), String> {
-    let mut contents = match get_file_contents(file_path) {
+fn add_file_to_layout_collection(layouts: &mut HashMap<String, HashMap<String,String>>, file_path: &std::path::Path) -> Result<(), String> {
+    let file_stem: String = match file_path.file_stem().unwrap().to_os_string().into_string() {
+        Ok(s) => s,
+        Err(os) => return Err(format!("File stem is not a valid Unicode string. Lossy result is: {}", os.to_string_lossy())),
+    };
+
+    let contents = match get_file_contents(file_path) {
         Ok(c) => c,
         Err(e) => return Err(format!("Failed to add file to layout collection due to: {}", e)),
-    }
+    };
+
+    layouts.insert(file_stem, get_file_metadata(&contents));
+    
+    Ok(())
 }
-*/
 
 fn get_file_metadata(file_string: &String) -> HashMap<String, String> {
     if file_string.starts_with("---\n") {
