@@ -6,57 +6,14 @@ use liquid;
 use liquid::*;
 
 mod templating;
+use templating::Templator;
 
 #[tokio::main]
 async fn main() {
-    let compiler = templating::construct_liquid_complier();
-
-    // Build parser
-    let parser = ParserBuilder::with_stdlib()
-        .partials(compiler)
-        .build()
-        .unwrap();
-    let parser = Arc::new(parser);
-
-    // TODO: Remove this testing code
-    let globals = object!({"empty": "empty?"});
-    let template = parser.parse("{% include './_includes/test.html' %}\ntesting templating.")
-        .unwrap();
-
-    let output = template.render(&globals).unwrap();
-    println!("Test liquid templating:\n{}", output);
-
-    let template = parser.parse("{% include './_includes/test.html' %}")
-        .unwrap();
-
-    let output = template.render(&globals).unwrap();
-    println!("Test nested templating:\n{}", output);
-
-    let test_str = "---\nlayout: base\ntitle: 'a page'\n---\n<p>This is the content of the webpage!</p>".to_string();
-    /*
-    let test_split: Vec<&str> = test_str.splitn(3, "---\n").collect();
-    println!("Testing splitn on:\n{}\nResult of splitn:\n{}\n{}\n{}", test_str, test_split[0], test_split[1], test_split[2]);
-    */
-
-    let test_metadata = templating::get_file_metadata(&test_str);
-    println!("Extracted metadata:");
-    for (key, value) in &test_metadata {
-        println!("{} = {}", key, value);
-    }
-
-    let layouts = templating::create_layout_collection().unwrap();
-    for (layout_name, layout_metadata) in layouts.iter() {
-        println!("Metadata of layout {}:", layout_name);
-        for (key, value) in layout_metadata {
-            println!("{} = {}", key, value);
-        }
-    }
-
-    // end Testing code
-
+    let templator = Templator::templator("./_layout/".to_string(), "./_includes/".to_string(), "./_templates/".to_string());
+    let templator = Arc::new(templator);
     
-    // Actual program stuff
-    let template_file = move |file_path| templating::render_file(parser.clone(), file_path);
+    let template_file = move |file_path| templator.clone().render_file(file_path);
 
     let string = "This is a test string to place into a filter";
     
