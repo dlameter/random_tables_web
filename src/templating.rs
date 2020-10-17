@@ -13,7 +13,7 @@ pub struct Templator {
 }
 
 impl Templator {
-    pub fn templator(layout_dir: String, include_dir: String) -> Templator {
+    pub fn new(layout_dir: String, include_dir: String) -> Templator {
         let layout_collection = Templator::create_layout_collection(&layout_dir).unwrap();
         let parser = Templator::construct_liquid_parser(&include_dir);
 

@@ -8,7 +8,7 @@ use templating::Templator;
 
 #[tokio::main]
 async fn main() {
-    let templator = Templator::templator("./_layout/".to_string(), "./_includes/".to_string());
+    let templator = Templator::new("./_layout/".to_string(), "./_includes/".to_string());
     let templator = Arc::new(templator);
     
     let template_file = move |file_path| templator.clone().render_file(file_path);
