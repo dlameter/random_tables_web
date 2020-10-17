@@ -18,7 +18,7 @@ pub struct Templator {
 
 impl Templator {
     pub fn templator(layout_dir: String, include_dir: String, template_dir: String) -> Templator {
-        let layout_collection = Templator::create_layout_collection().unwrap();
+        let layout_collection = Templator::create_layout_collection(&layout_dir).unwrap();
         let parser = Templator::construct_liquid_parser(&include_dir);
 
         Templator {
@@ -88,10 +88,10 @@ impl Templator {
         Ok(())
     }
 
-    fn create_layout_collection() -> std::io::Result<HashMap<String, HashMap<String, String>>> {
+    fn create_layout_collection(layout_dir: &String) -> std::io::Result<HashMap<String, HashMap<String, String>>> {
         let mut layouts = HashMap::new();
 
-        let dir = Path::new("./_layout/");
+        let dir = Path::new(layout_dir);
 
         if dir.is_dir() {
             for entry in fs::read_dir(dir)? {
