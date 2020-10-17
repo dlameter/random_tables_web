@@ -3,7 +3,6 @@ use std::io::prelude::*;
 use std::fs;
 use std::fs::{File};
 use std::path::Path;
-use std::sync::Arc;
 
 use liquid;
 use liquid::*;
@@ -11,22 +10,16 @@ use liquid::*;
 pub struct Templator {
     layout_collection: HashMap<String, HashMap<String, String>>,
     parser: liquid::Parser,
-    layout_dir: String,
-    include_dir: String,
-    template_dir: String,
 }
 
 impl Templator {
-    pub fn templator(layout_dir: String, include_dir: String, template_dir: String) -> Templator {
+    pub fn templator(layout_dir: String, include_dir: String) -> Templator {
         let layout_collection = Templator::create_layout_collection(&layout_dir).unwrap();
         let parser = Templator::construct_liquid_parser(&include_dir);
 
         Templator {
             layout_collection,
             parser,
-            layout_dir,
-            include_dir,
-            template_dir,
         }
     }
 
