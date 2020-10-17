@@ -19,7 +19,7 @@ pub struct Templator {
 impl Templator {
     pub fn templator(layout_dir: String, include_dir: String, template_dir: String) -> Templator {
         let layout_collection = Templator::create_layout_collection().unwrap();
-        let parser = Templator::construct_liquid_parser();
+        let parser = Templator::construct_liquid_parser(&include_dir);
 
         Templator {
             layout_collection,
@@ -42,17 +42,17 @@ impl Templator {
         warp::reply::html(output)
     }
 
-    fn construct_liquid_parser() -> liquid::Parser {
+    fn construct_liquid_parser(include_dir: &String) -> liquid::Parser {
         ParserBuilder::with_stdlib()
-            .partials(Templator::construct_liquid_complier())
+            .partials(Templator::construct_liquid_complier(include_dir))
             .build()
             .unwrap()
     }
 
-    fn construct_liquid_complier() -> liquid::partials::EagerCompiler::<liquid::partials::InMemorySource> {
+    fn construct_liquid_complier(include_dir: &String) -> liquid::partials::EagerCompiler::<liquid::partials::InMemorySource> {
         let mut compiler = liquid::partials::EagerCompiler::<liquid::partials::InMemorySource>::empty();
 
-        match Templator::add_files_to_compiler(&mut compiler) {
+        match Templator::add_files_to_compiler(&mut compiler, include_dir) {
             Ok(_) => (),
             Err(_) => print!("Failed to add files to compiler.\n"),
         }
@@ -60,8 +60,8 @@ impl Templator {
         compiler
     }
 
-    fn add_files_to_compiler(compiler: &mut liquid::partials::EagerCompiler::<liquid::partials::InMemorySource>) -> std::io::Result<()> {
-        let dir = Path::new("./_includes/");
+    fn add_files_to_compiler(compiler: &mut liquid::partials::EagerCompiler::<liquid::partials::InMemorySource>, include_dir: &String) -> std::io::Result<()> {
+        let dir = Path::new(include_dir);
 
         if dir.is_dir() {
             for entry in fs::read_dir(dir)? {
