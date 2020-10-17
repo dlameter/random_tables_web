@@ -13,8 +13,6 @@ async fn main() {
     
     let template_file = move |file_path| templator.clone().render_file(file_path);
 
-    let string = "This is a test string to place into a filter";
-    
     let index = warp::path("index.html").and(warp::fs::file("index.html"));
     let index_redirect = warp::path::end().map(|| warp::redirect(Uri::from_static("/index.html")));
 
