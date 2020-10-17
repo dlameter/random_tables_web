@@ -2,15 +2,13 @@ use std::path::Path;
 use std::sync::Arc;
 
 use warp::{http::Uri, Filter};
-use liquid;
-use liquid::*;
 
 mod templating;
 use templating::Templator;
 
 #[tokio::main]
 async fn main() {
-    let templator = Templator::templator("./_layout/".to_string(), "./_includes/".to_string(), "./_templates/".to_string());
+    let templator = Templator::templator("./_layout/".to_string(), "./_includes/".to_string());
     let templator = Arc::new(templator);
     
     let template_file = move |file_path| templator.clone().render_file(file_path);
