@@ -131,7 +131,7 @@ impl Templator {
             }
             else {
                 // Process first split portion for metadata
-                let mut metadata = Templator::process_file_frontmatter(split[1].to_string().clone());
+                let mut metadata = Templator::process_frontmatter(split[1].to_string().clone());
 
                 // Insert last bit as content
                 metadata.insert("content".to_string(), split[2].to_string().clone());
@@ -147,7 +147,7 @@ impl Templator {
         }
     }
 
-    fn process_file_frontmatter(metadata_string: String) -> HashMap<String, String> {
+    fn process_frontmatter(metadata_string: String) -> HashMap<String, String> {
         let mut metadata = HashMap::new();
 
         for line in metadata_string.split("\n").collect::<Vec<&str>>() {
@@ -156,7 +156,7 @@ impl Templator {
             let split: Vec<&str> = line.splitn(2, ":").collect();
 
             let key = split[0].trim();
-            if key.is_empty() { break; }
+            if key.is_empty() { continue; }
 
             if split.len() > 1 {
                 let value = split[1].trim();
@@ -191,4 +191,53 @@ impl Templator {
         }
     }
 
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn valid_frontmatter() {
+        let mut expected_hashmap = HashMap::new();
+        expected_hashmap.insert("testing".to_string(), "values".to_string());
+        expected_hashmap.insert("layout".to_string(), "base".to_string());
+
+        let file_content = "testing: values\nlayout: base\n".to_string();
+        let actual_hashmap = Templator::process_frontmatter(file_content);
+
+        assert_eq!(expected_hashmap, actual_hashmap);
+    }
+
+    #[test]
+    fn valid_frontmatter_with_blank_line() {
+        let mut expected_hashmap = HashMap::new();
+        expected_hashmap.insert("testing".to_string(), "values".to_string());
+        expected_hashmap.insert("layout".to_string(), "base".to_string());
+
+        let file_content = "testing: values\n\nlayout: base\n".to_string();
+        let actual_hashmap = Templator::process_frontmatter(file_content);
+
+        assert_eq!(expected_hashmap, actual_hashmap);
+    }
+
+    #[test]
+    fn empty_frontmatter() {
+        let expected_hashmap = HashMap::new();
+
+        let file_content = "".to_string();
+        let actual_hashmap = Templator::process_frontmatter(file_content);
+
+        assert_eq!(expected_hashmap, actual_hashmap);
+    }
+
+    #[test]
+    fn blank_line_frontmatter() {
+        let expected_hashmap = HashMap::new();
+
+        let file_content = "\n".to_string();
+        let actual_hashmap = Templator::process_frontmatter(file_content);
+
+        assert_eq!(expected_hashmap, actual_hashmap);
+    }
 }
