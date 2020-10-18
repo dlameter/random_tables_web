@@ -240,4 +240,107 @@ mod tests {
 
         assert_eq!(expected_hashmap, actual_hashmap);
     }
+
+    #[test]
+    fn get_file_metadata_valid_file() {
+        let mut expected_hashmap = HashMap::new();
+        expected_hashmap.insert("testing".to_string(), "values".to_string());
+        expected_hashmap.insert("content".to_string(), "File contents go\nhere.".to_string());
+
+        let file_content = "---\ntesting: values\n---\nFile contents go\nhere.".to_string();
+        let actual_hashmap = Templator::get_file_metadata(&file_content);
+
+        assert_eq!(expected_hashmap, actual_hashmap);
+    }
+
+    #[test]
+    fn get_file_metadata_valid_file_with_empty_frontmatter() {
+        let mut expected_hashmap = HashMap::new();
+        expected_hashmap.insert("content".to_string(), "File contents go\nhere.".to_string());
+
+        let file_content = "---\n---\nFile contents go\nhere.".to_string();
+        let actual_hashmap = Templator::get_file_metadata(&file_content);
+
+        assert_eq!(expected_hashmap, actual_hashmap);
+    }
+
+    #[test]
+    fn get_file_metadata_valid_file_with_no_frontmatter() {
+        let mut expected_hashmap = HashMap::new();
+        expected_hashmap.insert("content".to_string(), "File contents go\nhere.".to_string());
+
+        let file_content = "File contents go\nhere.".to_string();
+        let actual_hashmap = Templator::get_file_metadata(&file_content);
+
+        assert_eq!(expected_hashmap, actual_hashmap);
+    }
+
+    #[test]
+    fn get_file_metadata_valid_file_with_empty_content() {
+        let mut expected_hashmap = HashMap::new();
+        expected_hashmap.insert("testing".to_string(), "values".to_string());
+        expected_hashmap.insert("content".to_string(), "".to_string());
+
+        let file_content = "---\ntesting: values\n---\n".to_string();
+        let actual_hashmap = Templator::get_file_metadata(&file_content);
+
+        assert_eq!(expected_hashmap, actual_hashmap);
+    }
+
+    #[test]
+    fn get_file_metadata_valid_file_with_empty_content_no_trailing_newline() {
+        let mut expected_hashmap = HashMap::new();
+        expected_hashmap.insert("testing".to_string(), "values".to_string());
+        expected_hashmap.insert("content".to_string(), "".to_string());
+
+        let file_content = "---\ntesting: values\n---".to_string();
+        let actual_hashmap = Templator::get_file_metadata(&file_content);
+
+        assert_eq!(expected_hashmap, actual_hashmap);
+    }
+
+    #[test]
+    fn get_file_metadata_empty_file() {
+        let mut expected_hashmap = HashMap::new();
+        expected_hashmap.insert("content".to_string(), "".to_string());
+
+        let file_content = "".to_string();
+        let actual_hashmap = Templator::get_file_metadata(&file_content);
+
+        assert_eq!(expected_hashmap, actual_hashmap);
+    }
+
+    #[test]
+    fn get_file_metadata_valid_file_with_three_frontmatter_seperators() {
+        let mut expected_hashmap = HashMap::new();
+        expected_hashmap.insert("testing".to_string(), "values".to_string());
+        expected_hashmap.insert("content".to_string(), "File contents go\n---\nhere.".to_string());
+
+        let file_content = "---\ntesting: values\n---\nFile contents go\n---\nhere.".to_string();
+        let actual_hashmap = Templator::get_file_metadata(&file_content);
+
+        assert_eq!(expected_hashmap, actual_hashmap);
+    }
+
+    #[test]
+    fn get_file_metadata_invalid_file_with_one_frontmatter_seperator_at_start() {
+        let mut expected_hashmap = HashMap::new();
+        expected_hashmap.insert("content".to_string(), "---\nFile contents go\nhere.".to_string());
+
+        let file_content = "---\nFile contents go\nhere.".to_string();
+        let actual_hashmap = Templator::get_file_metadata(&file_content);
+
+        assert_eq!(expected_hashmap, actual_hashmap);
+    }
+
+    #[test]
+    fn get_file_metadata_valid_file_with_one_frontmatter_seperator_in_middle() {
+        let mut expected_hashmap = HashMap::new();
+        expected_hashmap.insert("content".to_string(), "File contents go\n---\nhere.".to_string());
+
+        let file_content = "File contents go\n---\nhere.".to_string();
+        let actual_hashmap = Templator::get_file_metadata(&file_content);
+
+        assert_eq!(expected_hashmap, actual_hashmap);
+    }
 }
