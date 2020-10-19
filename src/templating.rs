@@ -23,16 +23,43 @@ impl Templator {
         }
     }
 
-    pub fn render_file(&self, template_path: &std::path::Path/*, globals, &Object*/) -> impl warp::Reply {
+    pub fn render_file(&self, template_path: &std::path::Path/*, globals: &Object*/) -> dyn warp::reply::Reply {
         let globals = object!({"empty": "empty?"});
 
-        let template = self.parser.parse_file(template_path)
-            .unwrap();
+        let file_metadata = match Templator::get_file_contents(template_path) {
+            Ok(c) => Templator::get_file_metadata(&c),
+            Err(e) => return "Could not find template file.",
+        };
 
-        let output = template.render(&globals).unwrap();
-        println!("Test liquid templating:\n{}", output);
+        let output = match self.process_metadata(&file_metadata, &globals) {
+            Ok(s) => s,
+            Err(e) => return "Failed to process metadata" // TODO: add process_metadata error to error response,
+        };
 
-        warp::reply::html(output)
+        output
+    }
+
+    fn process_metadata(&self, file_metadata: &HashMap<String, String>, globals: &Object) -> Result<String, String> {
+        // TODO: Add the rest of metadata to globals
+
+        let template = self.parser.parse(file_metadata.get("content").unwrap()).unwrap();
+        let output = template.render(globals).unwrap();
+
+        output = match file_metadata.get(&"layout".to_string()) {
+            Some(s) => {
+                let layout_metadata = match self.layout_collection.get(s) {
+                    Some(metadata) => metadata,
+                    None => return Err(format!("Layout {} could not be found.", s)),
+                };
+
+                let mut new_globals = object!({ "Content": output });
+
+                self.process_metadata(&layout_metadata, &new_globals).unwrap()
+            },
+            None => output,
+        };
+
+        Ok(output)
     }
 
     fn construct_liquid_parser(include_dir: &String) -> liquid::Parser {
