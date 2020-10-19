@@ -343,4 +343,24 @@ mod tests {
 
         assert_eq!(expected_hashmap, actual_hashmap);
     }
+
+    #[test]
+    fn read_file_contents_valid_file() {
+        let expected = "This file is valid.\n";
+
+        let path = Path::new("./test/files/basic/valid.txt");
+        let result = Templator::get_file_contents(&path);
+        assert!(result.is_ok());
+
+        let result = result.unwrap();
+        assert_eq!(expected, result);
+    }
+
+    #[test]
+    fn read_file_contents_nonexistant_file() {
+        let path = Path::new("./this/is/not/a/valid/path.txt");
+        let result = Templator::get_file_contents(&path);
+        assert!(result.is_err());
+        assert!(result.expect_err("Error did not contain expected substring.").contains("Failed to open file"));
+    }
 }
