@@ -11,7 +11,7 @@ async fn main() {
     let templator = Templator::new("./_layout/".to_string(), "./_includes/".to_string());
     let templator = Arc::new(templator);
     
-    let template_file = move |file_path| templator.clone().render_file(file_path);
+    let template_file = move |file_path| warp::reply::html(templator.clone().render_file(file_path));
 
     let index = warp::path("index.html").and(warp::fs::file("index.html"));
     let index_redirect = warp::path::end().map(|| warp::redirect(Uri::from_static("/index.html")));

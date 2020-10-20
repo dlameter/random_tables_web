@@ -23,17 +23,17 @@ impl Templator {
         }
     }
 
-    pub fn render_file(&self, template_path: &std::path::Path/*, globals: &Object*/) -> dyn warp::reply::Reply {
+    pub fn render_file(&self, template_path: &std::path::Path/*, globals: &Object*/) -> String {
         let globals = object!({"empty": "empty?"});
 
         let file_metadata = match Templator::get_file_contents(template_path) {
             Ok(c) => Templator::get_file_metadata(&c),
-            Err(e) => return "Could not find template file.",
+            Err(e) => return "Could not find template file.".to_string(),
         };
 
         let output = match self.process_metadata(&file_metadata, &globals) {
             Ok(s) => s,
-            Err(e) => return "Failed to process metadata" // TODO: add process_metadata error to error response,
+            Err(e) => return "Failed to process metadata".to_string() // TODO: add process_metadata error to error response,
         };
 
         output
@@ -45,7 +45,7 @@ impl Templator {
         let template = self.parser.parse(file_metadata.get("content").unwrap()).unwrap();
         let output = template.render(globals).unwrap();
 
-        output = match file_metadata.get(&"layout".to_string()) {
+        let output = match file_metadata.get(&"layout".to_string()) {
             Some(s) => {
                 let layout_metadata = match self.layout_collection.get(s) {
                     Some(metadata) => metadata,
