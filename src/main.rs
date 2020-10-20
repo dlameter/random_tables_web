@@ -13,19 +13,14 @@ async fn main() {
     
     let template_file = move |file_path| warp::reply::html(templator.clone().render_file(file_path));
 
-    let index = warp::path("index.html").and(warp::fs::file("index.html"));
-    let index_redirect = warp::path::end().map(|| warp::redirect(Uri::from_static("/index.html")));
-
-    let test = warp::path("test")
+    let index = warp::path("index.html")
         .map(|| Path::new("index.html"))
         .map(template_file);
-
-    let hello = warp::path!("hello" / String)
-        .map(|name| format!("Hello, {}!", name));
+    let index_redirect = warp::path::end().map(|| warp::redirect(Uri::from_static("/index.html")));
 
     let static_files = warp::path("static").and(warp::fs::dir("static"));
 
-    let routes = warp::get().and(index.or(index_redirect).or(hello).or(test).or(static_files));
+    let routes = warp::get().and(index.or(index_redirect).or(static_files));
 
     warp::serve(routes)
         .run(([127,0,0,1], 3030))
