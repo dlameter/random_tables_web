@@ -28,12 +28,12 @@ impl Templator {
 
         let file_metadata = match Templator::get_file_contents(template_path) {
             Ok(c) => Templator::get_file_metadata(&c),
-            Err(e) => return "Could not find template file.".to_string(),
+            Err(e) => return format!("Could not get file metadata with error: {}", e).to_string(),
         };
 
         let output = match self.process_metadata(&file_metadata, &globals) {
             Ok(s) => s,
-            Err(e) => return "Failed to process metadata".to_string() // TODO: add process_metadata error to error response,
+            Err(e) => return format!("Failed to process metadata with error: {}", e).to_string() // TODO: add process_metadata error to error response,
         };
 
         output
@@ -52,7 +52,7 @@ impl Templator {
                     None => return Err(format!("Layout {} could not be found.", s)),
                 };
 
-                let mut new_globals = object!({ "Content": output });
+                let new_globals = object!({ "Content": output });
 
                 self.process_metadata(&layout_metadata, &new_globals).unwrap()
             },
