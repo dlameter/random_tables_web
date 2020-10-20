@@ -23,7 +23,9 @@ async fn main() {
     let hello = warp::path!("hello" / String)
         .map(|name| format!("Hello, {}!", name));
 
-    let routes = warp::get().and(index.or(index_redirect).or(hello).or(test));
+    let static_files = warp::path("static").and(warp::fs::dir("static"));
+
+    let routes = warp::get().and(index.or(index_redirect).or(hello).or(test).or(static_files));
 
     warp::serve(routes)
         .run(([127,0,0,1], 3030))
