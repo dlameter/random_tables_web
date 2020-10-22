@@ -62,6 +62,19 @@ impl Templator {
         Ok(output)
     }
 
+    fn merge_globals(file_metadata: &HashMap<String, String>, globals: &Object) -> Object {
+        let mut new_globals = globals.clone();
+
+        for (key, value) in file_metadata.iter() {
+            let k = model::scalar!(key).to_kstr().into_owned();
+            let v = model::Value::from(model::value!(value).as_scalar().unwrap().into_owned());
+
+            new_globals.insert(k, v);
+        }
+
+        new_globals
+    }
+
     fn construct_liquid_parser(include_dir: &String) -> liquid::Parser {
         ParserBuilder::with_stdlib()
             .partials(Templator::construct_liquid_complier(include_dir))
@@ -223,6 +236,62 @@ impl Templator {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn merge_globals_empty_metadata_empty_globals() {
+        let metadata = HashMap::<String, String>::new();
+        let globals = object!({});
+        let expected = object!({});
+
+        let actual = Templator::merge_globals(&metadata, &globals);
+        assert_eq!(expected, actual);
+    }
+
+    #[test]
+    fn merge_globals_empty_globals() {
+        let mut metadata = HashMap::<String, String>::new();
+        metadata.insert("metadata".to_string(), "test".to_string());
+        let globals = object!({});
+        let expected = object!({ "metadata": "test" });
+
+        let actual = Templator::merge_globals(&metadata, &globals);
+        assert_eq!(expected, actual);
+    }
+
+    #[test]
+    fn merge_globals_empty_metadata() {
+        let metadata = HashMap::<String, String>::new();
+        let globals = object!({ "global": "test" });
+        let expected = object!({ "global": "test" });
+
+        let actual = Templator::merge_globals(&metadata, &globals);
+        assert_eq!(expected, actual);
+    }
+
+    #[test]
+    fn merge_globals_nonoverlaping_metadata_and_globals() {
+        let mut metadata = HashMap::<String, String>::new();
+        metadata.insert("metadata".to_string(), "test".to_string());
+
+        let globals = object!({ "global": "test" });
+        let expected = object!({ "metadata": "test", "global": "test" });
+
+        let actual = Templator::merge_globals(&metadata, &globals);
+        assert_eq!(expected, actual);
+    }
+
+    #[test]
+    fn merge_globals_overlaping_metadata_and_globals() {
+        let mut metadata = HashMap::<String, String>::new();
+        metadata.insert("metadata".to_string(), "test".to_string());
+        metadata.insert("overlap".to_string(), "metadata".to_string());
+
+        let globals = object!({ "global": "test", "overlap": "globals" });
+        let expected = object!({ "global": "test", "metadata": "test", "overlap": "metadata" });
+
+        let actual = Templator::merge_globals(&metadata, &globals);
+        assert_eq!(expected, actual);
+    }
 
     #[test]
     fn valid_frontmatter() {
