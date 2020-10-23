@@ -52,7 +52,8 @@ impl Templator {
                     None => return Err(format!("Layout {} could not be found.", s)),
                 };
 
-                let new_globals = object!({ "Content": output });
+                let mut new_globals = Templator::merge_globals(&file_metadata, globals);
+                Templator::add_content_to_global(&mut new_globals, output);
 
                 self.process_metadata(&layout_metadata, &new_globals).unwrap()
             },
@@ -73,6 +74,13 @@ impl Templator {
         }
 
         new_globals
+    }
+
+    fn add_content_to_global(globals: &mut Object, content: String) {
+        let k = model::scalar!("Content").to_kstr().into_owned();
+        let v = model::Value::from(model::value!(content).as_scalar().unwrap().into_owned());
+
+        globals.insert(k, v);
     }
 
     fn construct_liquid_parser(include_dir: &String) -> liquid::Parser {
