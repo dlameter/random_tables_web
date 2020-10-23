@@ -40,10 +40,10 @@ impl Templator {
     }
 
     fn process_metadata(&self, file_metadata: &HashMap<String, String>, globals: &Object) -> Result<String, String> {
-        // TODO: Add the rest of metadata to globals
+        let mut globals = Templator::merge_globals(&file_metadata, globals);
 
         let template = self.parser.parse(file_metadata.get("content").unwrap()).unwrap();
-        let output = template.render(globals).unwrap();
+        let output = template.render(&globals).unwrap();
 
         let output = match file_metadata.get(&"layout".to_string()) {
             Some(s) => {
@@ -52,10 +52,9 @@ impl Templator {
                     None => return Err(format!("Layout {} could not be found.", s)),
                 };
 
-                let mut new_globals = Templator::merge_globals(&file_metadata, globals);
-                Templator::add_content_to_global(&mut new_globals, output);
+                Templator::add_content_to_global(&mut globals, output);
 
-                self.process_metadata(&layout_metadata, &new_globals).unwrap()
+                self.process_metadata(&layout_metadata, &globals).unwrap()
             },
             None => output,
         };
