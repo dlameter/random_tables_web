@@ -33,7 +33,7 @@ impl Templator {
 
         let output = match self.process_metadata(&file_metadata, &globals) {
             Ok(s) => s,
-            Err(e) => return format!("Failed to process metadata with error: {}", e).to_string() // TODO: add process_metadata error to error response,
+            Err(e) => return format!("Failed to process metadata with error: {}", e).to_string()
         };
 
         output
