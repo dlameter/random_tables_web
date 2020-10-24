@@ -1,4 +1,5 @@
 use std::collections::HashMap;
+use std::borrow::Cow;
 use std::io::prelude::*;
 use std::fs;
 use std::fs::{File};
@@ -109,14 +110,14 @@ impl Templator {
                 let path = entry.path();
 
                 if path.is_file() {
-                    let path_str = match path.to_str() {
+                    let file_name = match Templator::path_to_file_name(&path) {
                         Some(s) => s,
-                        None => "[error: could not get str representation of path]",
+                        None => continue,
                     };
 
                     match Templator::get_file_contents(&path) {
                         Ok(contents) => {
-                            compiler.add(path_str, contents);
+                            compiler.add(file_name, contents);
                             ()
                         },
                         Err(e) => println!("{}", e),
@@ -126,6 +127,13 @@ impl Templator {
         }
 
         Ok(())
+    }
+
+    fn path_to_file_name(path: &std::path::Path) -> Option<Cow<'_, str>> {
+        match path.file_name() {
+            Some(os) => Some(os.to_string_lossy()),
+            None => None,
+        }
     }
 
     fn create_layout_collection(layout_dir: &String) -> std::io::Result<HashMap<String, HashMap<String, String>>> {
