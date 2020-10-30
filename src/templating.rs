@@ -24,15 +24,13 @@ impl Templator {
         }
     }
 
-    pub fn render_file(&self, template_path: &std::path::Path/*, globals: &Object*/) -> String {
-        let globals = object!({"empty": "empty?"});
-
+    pub fn render_file(&self, template_path: &std::path::Path, globals: &Object) -> String {
         let file_metadata = match Templator::get_file_contents(template_path) {
             Ok(c) => Templator::get_file_metadata(&c),
             Err(e) => return format!("Could not get file metadata with error: {}", e).to_string(),
         };
 
-        let output = match self.process_metadata(&file_metadata, &globals) {
+        let output = match self.process_metadata(&file_metadata, globals) {
             Ok(s) => s,
             Err(e) => return format!("Failed to process metadata with error: {}", e).to_string()
         };

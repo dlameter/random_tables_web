@@ -2,6 +2,7 @@ use std::path::Path;
 use std::sync::Arc;
 
 use warp::{http::Uri, Filter};
+use liquid::object;
 
 mod templating;
 use templating::Templator;
@@ -11,7 +12,7 @@ async fn main() {
     let templator = Templator::new("./_layout/".to_string(), "./_includes/".to_string());
     let templator = Arc::new(templator);
     
-    let template_file = move |file_path| warp::reply::html(templator.clone().render_file(file_path));
+    let template_file = move |file_path| warp::reply::html(templator.clone().render_file(file_path, &object!({})));
 
     let index = warp::path("index.html")
         .map(|| Path::new("index.html"))
