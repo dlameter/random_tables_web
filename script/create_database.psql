@@ -1,18 +1,24 @@
 CREATE DATABASE random_tables;
-/c random_tables
-CREATE TABLE user(
-    user_id int NOT NULL AUTO_INCREMENT PRIMARY KEY,
+
+\c random_tables;
+
+CREATE TABLE account (
+    account_id serial PRIMARY KEY,
     username varchar(128) NOT NULL UNIQUE,
-    password_hash varchar(16) NOT NULL,
+    password_hash varchar(128) NOT NULL
 );
-CREATE TABLE table (
-    table_id int NOT NULL AUTO_INCREMENT PRIMARY KEY,
-    created_by NOT NULL FOREIGN KEY,
+
+CREATE TABLE random_table (
+    id serial PRIMARY KEY,
+    created_by int NOT NULL,
     name varchar(128) NOT NULL,
+    FOREIGN KEY (created_by) REFERENCES account (account_id)
 );
-CREATE TABLE element (
+
+CREATE TABLE random_table_element (
     index int NOT NULL,
-    table NOT NULL FOREIGN KEY,
+    table_id int NOT NULL,
     text varchar(256) NOT NULL,
-    PRIMARY KEY(index, table),
+    FOREIGN KEY (table_id) REFERENCES random_table (id),
+    CONSTRAINT random_table_element_pk PRIMARY KEY(index, table_id)
 );
