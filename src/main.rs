@@ -7,8 +7,16 @@ use liquid::object;
 mod templating;
 use templating::Templator;
 
+mod database_handler;
+use database_handler::DatabaseHandler;
+
 #[tokio::main]
 async fn main() {
+    let handler = match DatabaseHandler::new() {
+        Ok(c) => c,
+        Err(e) => panic!(format!("Failed to create database handler with error: {}", e)),
+    };
+
     let templator = Templator::new("./_layout/".to_string(), "./_includes/".to_string());
     let templator = Arc::new(templator);
     
