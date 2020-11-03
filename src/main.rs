@@ -21,15 +21,28 @@ async fn main() {
     };
     let handler = Arc::new(Mutex::new(handler));
 
+    let handler_clone = Arc::clone(&handler);
     let account_by_id = warp::path!("account" / i32)
         .map(move |id| {
-            match handler.clone()
+            match handler_clone
                 .lock()
                 .unwrap()
                 .find_account_by_id(&id) {
                     Some(account) => format!("{:?}", account),
                     None => format!("Could not find user with id {}", id),
             }
+        });
+
+    let handler_clone = Arc::clone(&handler);
+    let account_by_name = warp::path!("account" / String)
+        .map(move |name| {
+            match handler_clone
+                .lock()
+                .unwrap()
+                .find_account_by_name(&name) {
+                    Some(account) => format!("{:?}", account),
+                    None => format!("Could not find user with name {}", name),
+                }
         });
 
     let templator = Templator::new("./_layout/".to_string(), "./_includes/".to_string());
@@ -44,7 +57,7 @@ async fn main() {
 
     let static_files = warp::path("static").and(warp::fs::dir("static"));
 
-    let routes = warp::get().and(index.or(index_redirect).or(static_files).or(account_by_id));
+    let routes = warp::get().and(index.or(index_redirect).or(static_files).or(account_by_id).or(account_by_name));
 
     warp::serve(routes)
         .run(([127,0,0,1], 3030))
