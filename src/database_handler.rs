@@ -39,6 +39,16 @@ impl DatabaseHandler {
             Err(_) => None,
         }
     }
+
+    pub fn find_account_by_name(&mut self, name: &String) -> Option<account::Account> {
+        match self.connection.query_one("SELECT * FROM account WHERE username = $1", &[name]) {
+            Ok(row) => match DatabaseHandler::row_to_account(&row) {
+                Ok(account) => Some(account),
+                Err(_) => None,
+            },
+            Err(_) => None,
+        }
+    }
     
     fn row_to_account(row: &postgres::row::Row) -> Result<account::Account, String> {
         let id: i32 = match row.try_get(COLUMN_ID) {
