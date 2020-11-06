@@ -2,10 +2,6 @@ use postgres::{Client, NoTls};
 
 use crate::data::{account, random_table};
 
-const COLUMN_ACCOUNT_ID: &str = "account_id";
-const COLUMN_ACCOUNT_NAME: &str = "username";
-const COLUMN_ACCOUNT_PASSWORD: &str = "password_hash";
-
 pub struct DatabaseHandler {
     connection: postgres::Client
 }
@@ -51,17 +47,17 @@ impl DatabaseHandler {
     }
     
     fn row_to_account(row: &postgres::row::Row) -> Result<account::Account, String> {
-        let id: i32 = match row.try_get(COLUMN_ACCOUNT_ID) {
+        let id: i32 = match row.try_get(account::COLUMN_ACCOUNT_ID) {
             Ok(value) => value,
-            Err(error) => return Err(format!("Failed to get column {} with error: {}", COLUMN_ACCOUNT_ID, error)),
+            Err(error) => return Err(format!("Failed to get column {} with error: {}", account::COLUMN_ACCOUNT_ID, error)),
         };
-        let name: String = match row.try_get(COLUMN_ACCOUNT_NAME) {
+        let name: String = match row.try_get(account::COLUMN_ACCOUNT_NAME) {
             Ok(value) => value,
-            Err(error) => return Err(format!("Failed to get column {} with error: {}", COLUMN_ACCOUNT_NAME, error)),
+            Err(error) => return Err(format!("Failed to get column {} with error: {}", account::COLUMN_ACCOUNT_NAME, error)),
         };
-        let password: String = match row.try_get(COLUMN_ACCOUNT_PASSWORD) {
+        let password: String = match row.try_get(account::COLUMN_ACCOUNT_PASSWORD) {
             Ok(value) => value,
-            Err(error) => return Err(format!("Failed to get column {} with error: {}", COLUMN_ACCOUNT_PASSWORD, error)),
+            Err(error) => return Err(format!("Failed to get column {} with error: {}", account::COLUMN_ACCOUNT_PASSWORD, error)),
         };
 
         Ok(account::Account {
