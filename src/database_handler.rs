@@ -74,6 +74,13 @@ impl DatabaseHandler {
         }
     }
 
+    pub fn delete_table(&mut self, table: &random_table::Table) -> Result<random_table::Table, String> {
+        let row = self.connection.query_one("DELETE FROM random_table WHERE id = $1 AND created_by = $2 RETURNING *", &[&table.id, &table.created_by])
+            .map_err(|error| format!("Failed to delete table with error: {}", error))?;
+
+        Ok(DatabaseHandler::row_to_table(&row)?)
+    }
+
     pub fn create_table_elements(&mut self, table: &random_table::Table) -> Result<(), String> {
         if let Some(ref elements) = table.elements {
             let statement = self.connection.prepare("INSERT INTO random_table_element (table_id, index, text) VALUES ($1, $2, $3)")
@@ -89,6 +96,13 @@ impl DatabaseHandler {
         else {
             return Err("Tried to create elements of table that has no elements.".to_string());
         }
+    }
+
+    pub fn delete_table_elements(&mut self, table: &random_table::Table) -> Result<Vec<String>, String> {
+        let rows = self.connection.query("DELETE FROM random_table_element WHERE table_id = $1 RETURNING *", &[&table.id])
+            .map_err(|error| format!("Failed to delete rows from random_table_element with error: {}", error))?;
+
+        Ok(DatabaseHandler::row_vec_to_element_vec(&rows)?)
     }
 
     fn row_to_table(row: &postgres::row::Row) -> Result<random_table::Table, String> {
