@@ -5,10 +5,6 @@ use crate::data::{account, random_table};
 const COLUMN_ACCOUNT_ID: &str = "account_id";
 const COLUMN_ACCOUNT_NAME: &str = "username";
 const COLUMN_ACCOUNT_PASSWORD: &str = "password_hash";
-const COLUMN_TABLE_ID: &str = "id";
-const COLUMN_TABLE_NAME: &str = "name";
-const COLUMN_TABLE_CREATED_BY: &str = "created_by";
-const COLUMN_TABLE_ELEMENT_TEXT: &str = "text";
 
 pub struct DatabaseHandler {
     connection: postgres::Client
@@ -100,17 +96,17 @@ impl DatabaseHandler {
     }
 
     fn row_to_table(row: &postgres::row::Row) -> Result<random_table::Table, String> {
-        let id: i32 = match row.try_get(COLUMN_TABLE_ID) {
+        let id: i32 = match row.try_get(random_table::COLUMN_TABLE_ID) {
             Ok(value) => value,
-            Err(error) => return Err(format!("Failed to get column {} with error: {}", COLUMN_TABLE_ID, error))
+            Err(error) => return Err(format!("Failed to get column {} with error: {}", random_table::COLUMN_TABLE_ID, error))
         };
-        let created_by: i32 = match row.try_get(COLUMN_TABLE_CREATED_BY) {
+        let created_by: i32 = match row.try_get(random_table::COLUMN_TABLE_CREATED_BY) {
             Ok(value) => value,
-            Err(error) => return Err(format!("Failed to get column {} with error: {}", COLUMN_TABLE_CREATED_BY, error))
+            Err(error) => return Err(format!("Failed to get column {} with error: {}", random_table::COLUMN_TABLE_CREATED_BY, error))
         };
-        let name: String = match row.try_get(COLUMN_TABLE_NAME) {
+        let name: String = match row.try_get(random_table::COLUMN_TABLE_NAME) {
             Ok(value) => value,
-            Err(error) => return Err(format!("Failed to get column {} with error: {}", COLUMN_TABLE_NAME, error))
+            Err(error) => return Err(format!("Failed to get column {} with error: {}", random_table::COLUMN_TABLE_NAME, error))
         };
 
         Ok(random_table::Table {
@@ -125,9 +121,9 @@ impl DatabaseHandler {
         let mut elements: Vec<String> = Vec::new();
 
         for row in rows {
-            let text: String = match row.try_get(COLUMN_TABLE_ELEMENT_TEXT) {
+            let text: String = match row.try_get(random_table::COLUMN_TABLE_ELEMENT_TEXT) {
                 Ok(value) => value,
-                Err(error) => return Err(format!("Failed to get column {} with error: {}", COLUMN_TABLE_ELEMENT_TEXT, error)),
+                Err(error) => return Err(format!("Failed to get column {} with error: {}", random_table::COLUMN_TABLE_ELEMENT_TEXT, error)),
             };
 
             elements.push(text);
