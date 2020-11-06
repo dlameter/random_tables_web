@@ -1,4 +1,5 @@
 use postgres::{Client, NoTls};
+use postgres::error::Error as PgError;
 
 use crate::data::{account, random_table};
 
@@ -74,10 +75,23 @@ impl DatabaseHandler {
         }
     }
 
-    pub fn delete_table(&mut self, table: &random_table::Table) -> Result<random_table::Table, String> {
-        let row = self.connection.query_one("DELETE FROM random_table WHERE id = $1 AND created_by = $2 RETURNING *", &[&table.id, &table.created_by])
-            .map_err(|error| format!("Failed to delete table with error: {}", error))?;
+    pub fn delete_table(&mut self, table: &random_table::Table) -> Result<random_table::Table, PgError> {
+        let mut transaction = self.connection.transaction()?;
 
+        match DatabaseHandler::delete_table_transaction(&mut transaction, table) {
+            Ok(table) => {
+                transaction.commit();
+                Ok(table)
+            },
+            Err(error) => {
+                transaction.rollback();
+                Err(error)
+            },
+        }
+    }
+
+    fn delete_table_transaction(transaction: &mut postgres::Transaction, table: &random_table::Table) -> Result<random_table::Table, PgError> {
+        let row = transaction.query_one("DELETE FROM random_table WHERE id = $1 AND created_by = $2 RETURNING *", &[&table.id, &table.created_by])?;
         Ok(DatabaseHandler::row_to_table(&row)?)
     }
 
@@ -105,19 +119,10 @@ impl DatabaseHandler {
         Ok(DatabaseHandler::row_vec_to_element_vec(&rows)?)
     }
 
-    fn row_to_table(row: &postgres::row::Row) -> Result<random_table::Table, String> {
-        let id: i32 = match row.try_get(random_table::COLUMN_TABLE_ID) {
-            Ok(value) => value,
-            Err(error) => return Err(format!("Failed to get column {} with error: {}", random_table::COLUMN_TABLE_ID, error))
-        };
-        let created_by: i32 = match row.try_get(random_table::COLUMN_TABLE_CREATED_BY) {
-            Ok(value) => value,
-            Err(error) => return Err(format!("Failed to get column {} with error: {}", random_table::COLUMN_TABLE_CREATED_BY, error))
-        };
-        let name: String = match row.try_get(random_table::COLUMN_TABLE_NAME) {
-            Ok(value) => value,
-            Err(error) => return Err(format!("Failed to get column {} with error: {}", random_table::COLUMN_TABLE_NAME, error))
-        };
+    fn row_to_table(row: &postgres::row::Row) -> Result<random_table::Table, PgError> {
+        let id: i32 = row.try_get(random_table::COLUMN_TABLE_ID)?;
+        let created_by: i32 = row.try_get(random_table::COLUMN_TABLE_CREATED_BY)?;
+        let name: String = row.try_get(random_table::COLUMN_TABLE_NAME)?;
 
         Ok(random_table::Table {
             id,
