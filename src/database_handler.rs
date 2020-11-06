@@ -8,6 +8,7 @@ const COLUMN_ACCOUNT_PASSWORD: &str = "password_hash";
 const COLUMN_TABLE_ID: &str = "id";
 const COLUMN_TABLE_NAME: &str = "name";
 const COLUMN_TABLE_CREATED_BY: &str = "created_by";
+const COLUMN_TABLE_ELEMENT_TEXT: &str = "text";
 
 pub struct DatabaseHandler {
     connection: postgres::Client
@@ -76,8 +77,25 @@ impl DatabaseHandler {
 
     pub fn create_table(&mut self, table: &random_table::Table) -> Result<(), String> {
         match self.connection.query("INSERT INTO random_table (created_by, name) VALUES ($1, $2)", &[&table.created_by, &table.name]) {
-            Ok(value) => Ok(()), // Also create element entries
+            Ok(value) => Ok(()),
             Err(error) => Err(format!("Failed to create random_table entry with error: {}", error)),
+        }
+    }
+
+    pub fn create_table_elements(&mut self, table: &random_table::Table) -> Result<(), String> {
+        if let Some(ref elements) = table.elements {
+            let statement = self.connection.prepare("INSERT INTO random_table_element (table_id, index, text) VALUES ($1, $2, $3)")
+                .map_err(|error| format!("Failed to create statment with error: {}", error))?;
+
+            for (index, value) in elements.iter().enumerate() {
+                self.connection.execute(&statement, &[&table.id, &(index as i32), value])
+                    .map_err(|error| format!("Failed to insert row in random_table_element with error: {}", error))?;
+            }
+
+            Ok(())
+        }
+        else {
+            return Err("Tried to create elements of table that has no elements.".to_string());
         }
     }
 
@@ -99,7 +117,22 @@ impl DatabaseHandler {
             id,
             created_by,
             name,
-            elements: Vec::new(),
+            elements: None,
         })
+    }
+
+    fn row_vec_to_element_vec(rows: &Vec<postgres::row::Row>) -> Result<Vec<String>, String> {
+        let mut elements: Vec<String> = Vec::new();
+
+        for row in rows {
+            let text: String = match row.try_get(COLUMN_TABLE_ELEMENT_TEXT) {
+                Ok(value) => value,
+                Err(error) => return Err(format!("Failed to get column {} with error: {}", COLUMN_TABLE_ELEMENT_TEXT, error)),
+            };
+
+            elements.push(text);
+        }
+
+        Ok(elements)
     }
 }
