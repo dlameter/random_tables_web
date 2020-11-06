@@ -75,6 +75,27 @@ impl DatabaseHandler {
         }
     }
 
+    pub fn delete_table_and_elements(&mut self, table: &random_table::Table) -> Result<random_table::Table, PgError> {
+        let mut transaction = self.connection.transaction()?;
+
+        let table_result = DatabaseHandler::delete_table_transaction(&mut transaction, table);
+        let elements_result = DatabaseHandler::delete_table_elements_transaction(&mut transaction, table);
+
+        if let Ok(mut table) = table_result {
+            table.elements = match elements_result {
+                Ok(elements) => elements,
+                Err(_) => None,
+            };
+
+            transaction.commit()?;
+            Ok(table)
+        }
+        else {
+            transaction.rollback()?;
+            table_result
+        }
+    }
+
     pub fn delete_table(&mut self, table: &random_table::Table) -> Result<random_table::Table, PgError> {
         let mut transaction = self.connection.transaction()?;
 
@@ -112,7 +133,7 @@ impl DatabaseHandler {
         }
     }
 
-    pub fn delete_table_elements(&mut self, table: &random_table::Table) -> Result<Vec<String>, PgError> {
+    pub fn delete_table_elements(&mut self, table: &random_table::Table) -> Result<Option<Vec<String>>, PgError> {
         let mut transaction = self.connection.transaction()?;
         
         match DatabaseHandler::delete_table_elements_transaction(&mut transaction, table) {
@@ -127,11 +148,10 @@ impl DatabaseHandler {
         }
     }
 
-    fn delete_table_elements_transaction(transaction: &mut postgres::Transaction, table: &random_table::Table) -> Result<Vec<String>, PgError> {
+    fn delete_table_elements_transaction(transaction: &mut postgres::Transaction, table: &random_table::Table) -> Result<Option<Vec<String>>, PgError> {
         let rows = transaction.query("DELETE FROM random_table_element WHERE table_id = $1 RETURNING *", &[&table.id])?;
         DatabaseHandler::row_vec_to_element_vec(&rows)
     }
-
 
     fn row_to_table(row: &postgres::row::Row) -> Result<random_table::Table, PgError> {
         let id: i32 = row.try_get(random_table::COLUMN_TABLE_ID)?;
@@ -146,7 +166,11 @@ impl DatabaseHandler {
         })
     }
 
-    fn row_vec_to_element_vec(rows: &Vec<postgres::row::Row>) -> Result<Vec<String>, PgError> {
+    fn row_vec_to_element_vec(rows: &Vec<postgres::row::Row>) -> Result<Option<Vec<String>>, PgError> {
+        if rows.is_empty() {
+            return Ok(None);
+        }
+
         let mut elements: Vec<String> = Vec::new();
 
         for row in rows {
@@ -154,6 +178,6 @@ impl DatabaseHandler {
             elements.push(text);
         }
 
-        Ok(elements)
+        Ok(Some(elements))
     }
 }
