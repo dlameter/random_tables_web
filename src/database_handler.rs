@@ -70,7 +70,7 @@ impl DatabaseHandler {
 
     pub fn create_table(&mut self, table: &random_table::Table) -> Result<(), String> {
         match self.connection.query("INSERT INTO random_table (created_by, name) VALUES ($1, $2)", &[&table.created_by, &table.name]) {
-            Ok(value) => Ok(()),
+            Ok(_) => Ok(()),
             Err(error) => Err(format!("Failed to create random_table entry with error: {}", error)),
         }
     }
