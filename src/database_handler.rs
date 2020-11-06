@@ -80,11 +80,11 @@ impl DatabaseHandler {
 
         match DatabaseHandler::delete_table_transaction(&mut transaction, table) {
             Ok(table) => {
-                transaction.commit();
+                transaction.commit()?;
                 Ok(table)
             },
             Err(error) => {
-                transaction.rollback();
+                transaction.rollback()?;
                 Err(error)
             },
         }
@@ -92,7 +92,7 @@ impl DatabaseHandler {
 
     fn delete_table_transaction(transaction: &mut postgres::Transaction, table: &random_table::Table) -> Result<random_table::Table, PgError> {
         let row = transaction.query_one("DELETE FROM random_table WHERE id = $1 AND created_by = $2 RETURNING *", &[&table.id, &table.created_by])?;
-        Ok(DatabaseHandler::row_to_table(&row)?)
+        DatabaseHandler::row_to_table(&row)
     }
 
     pub fn create_table_elements(&mut self, table: &random_table::Table) -> Result<(), String> {
@@ -112,12 +112,26 @@ impl DatabaseHandler {
         }
     }
 
-    pub fn delete_table_elements(&mut self, table: &random_table::Table) -> Result<Vec<String>, String> {
-        let rows = self.connection.query("DELETE FROM random_table_element WHERE table_id = $1 RETURNING *", &[&table.id])
-            .map_err(|error| format!("Failed to delete rows from random_table_element with error: {}", error))?;
-
-        Ok(DatabaseHandler::row_vec_to_element_vec(&rows)?)
+    pub fn delete_table_elements(&mut self, table: &random_table::Table) -> Result<Vec<String>, PgError> {
+        let mut transaction = self.connection.transaction()?;
+        
+        match DatabaseHandler::delete_table_elements_transaction(&mut transaction, table) {
+            Ok(elements) => {
+                transaction.commit()?;
+                Ok(elements)
+            },
+            Err(error) => {
+                transaction.rollback()?;
+                Err(error)
+            },
+        }
     }
+
+    fn delete_table_elements_transaction(transaction: &mut postgres::Transaction, table: &random_table::Table) -> Result<Vec<String>, PgError> {
+        let rows = transaction.query("DELETE FROM random_table_element WHERE table_id = $1 RETURNING *", &[&table.id])?;
+        DatabaseHandler::row_vec_to_element_vec(&rows)
+    }
+
 
     fn row_to_table(row: &postgres::row::Row) -> Result<random_table::Table, PgError> {
         let id: i32 = row.try_get(random_table::COLUMN_TABLE_ID)?;
@@ -132,15 +146,11 @@ impl DatabaseHandler {
         })
     }
 
-    fn row_vec_to_element_vec(rows: &Vec<postgres::row::Row>) -> Result<Vec<String>, String> {
+    fn row_vec_to_element_vec(rows: &Vec<postgres::row::Row>) -> Result<Vec<String>, PgError> {
         let mut elements: Vec<String> = Vec::new();
 
         for row in rows {
-            let text: String = match row.try_get(random_table::COLUMN_TABLE_ELEMENT_TEXT) {
-                Ok(value) => value,
-                Err(error) => return Err(format!("Failed to get column {} with error: {}", random_table::COLUMN_TABLE_ELEMENT_TEXT, error)),
-            };
-
+            let text: String = row.try_get(random_table::COLUMN_TABLE_ELEMENT_TEXT)?;
             elements.push(text);
         }
 
