@@ -1,10 +1,13 @@
 use postgres::{Client, NoTls};
 
-use crate::data::account;
+use crate::data::{account, random_table};
 
-const COLUMN_ID: &str = "account_id";
-const COLUMN_NAME: &str = "username";
-const COLUMN_PASSWORD: &str = "password_hash";
+const COLUMN_ACCOUNT_ID: &str = "account_id";
+const COLUMN_ACCOUNT_NAME: &str = "username";
+const COLUMN_ACCOUNT_PASSWORD: &str = "password_hash";
+const COLUMN_TABLE_ID: &str = "id";
+const COLUMN_TABLE_NAME: &str = "name";
+const COLUMN_TABLE_CREATED_BY: &str = "created_by";
 
 pub struct DatabaseHandler {
     connection: postgres::Client
@@ -51,23 +54,52 @@ impl DatabaseHandler {
     }
     
     fn row_to_account(row: &postgres::row::Row) -> Result<account::Account, String> {
-        let id: i32 = match row.try_get(COLUMN_ID) {
+        let id: i32 = match row.try_get(COLUMN_ACCOUNT_ID) {
             Ok(value) => value,
-            Err(error) => return Err(format!("Failed to get column {} with error: {}", COLUMN_ID, error)),
+            Err(error) => return Err(format!("Failed to get column {} with error: {}", COLUMN_ACCOUNT_ID, error)),
         };
-        let name: String = match row.try_get(COLUMN_NAME) {
+        let name: String = match row.try_get(COLUMN_ACCOUNT_NAME) {
             Ok(value) => value,
-            Err(error) => return Err(format!("Failed to get column {} with error: {}", COLUMN_NAME, error)),
+            Err(error) => return Err(format!("Failed to get column {} with error: {}", COLUMN_ACCOUNT_NAME, error)),
         };
-        let password: String = match row.try_get(COLUMN_PASSWORD) {
+        let password: String = match row.try_get(COLUMN_ACCOUNT_PASSWORD) {
             Ok(value) => value,
-            Err(error) => return Err(format!("Failed to get column {} with error: {}", COLUMN_PASSWORD, error)),
+            Err(error) => return Err(format!("Failed to get column {} with error: {}", COLUMN_ACCOUNT_PASSWORD, error)),
         };
 
         Ok(account::Account {
             id,
             name,
             password,
+        })
+    }
+
+    pub fn create_table(&mut self, table: &random_table::Table) -> Result<(), String> {
+        match self.connection.query("INSERT INTO random_table (created_by, name) VALUES ($1, $2)", &[&table.created_by, &table.name]) {
+            Ok(value) => Ok(()), // Also create element entries
+            Err(error) => Err(format!("Failed to create random_table entry with error: {}", error)),
+        }
+    }
+
+    fn row_to_table(row: &postgres::row::Row) -> Result<random_table::Table, String> {
+        let id: i32 = match row.try_get(COLUMN_TABLE_ID) {
+            Ok(value) => value,
+            Err(error) => return Err(format!("Failed to get column {} with error: {}", COLUMN_TABLE_ID, error))
+        };
+        let created_by: i32 = match row.try_get(COLUMN_TABLE_CREATED_BY) {
+            Ok(value) => value,
+            Err(error) => return Err(format!("Failed to get column {} with error: {}", COLUMN_TABLE_CREATED_BY, error))
+        };
+        let name: String = match row.try_get(COLUMN_TABLE_NAME) {
+            Ok(value) => value,
+            Err(error) => return Err(format!("Failed to get column {} with error: {}", COLUMN_TABLE_NAME, error))
+        };
+
+        Ok(random_table::Table {
+            id,
+            created_by,
+            name,
+            elements: Vec::new(),
         })
     }
 }
