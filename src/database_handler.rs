@@ -75,6 +75,16 @@ impl DatabaseHandler {
         }
     }
 
+    pub fn find_table_by_id(&mut self, id: &i32) -> Option<random_table::Table> {
+        match self.connection.query_one("SELECT * FROM random_table WHERE id = $1", &[id]) {
+            Ok(row) => match DatabaseHandler::row_to_table(&row) {
+                Ok(table) => Some(table),
+                Err(_) => None,
+            },
+            Err(_) => None,
+        }
+    }
+
     pub fn delete_table_and_elements(&mut self, table: &random_table::Table) -> Result<random_table::Table, PgError> {
         let mut transaction = self.connection.transaction()?;
 
