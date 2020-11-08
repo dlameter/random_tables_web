@@ -85,6 +85,23 @@ impl DatabaseHandler {
         }
     }
 
+    pub fn list_tables_by_creator_id(&mut self, creator_id: &i32) -> Vec<random_table::Table> {
+        let mut results = Vec::new();
+
+        match self.connection.query("SELECT * FROM random_table WHERE created_by = $1", &[creator_id]) {
+            Ok(rows) => {
+                for row in rows {
+                    if let Ok(table) = DatabaseHandler::row_to_table(&row) {
+                        results.push(table);
+                    }
+                }
+            },
+            Err(_) => return results,
+        }
+
+        results
+    }
+
     pub fn delete_table_and_elements(&mut self, table: &random_table::Table) -> Result<random_table::Table, PgError> {
         let mut transaction = self.connection.transaction()?;
 
