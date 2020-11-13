@@ -102,6 +102,10 @@ impl DatabaseHandler {
         results
     }
 
+    pub fn fill_table_with_elements(&mut self, table: &mut random_table::Table) {
+        table.elements = self.find_table_elements_by_table_id(&table.id);
+    }
+
     pub fn find_table_elements_by_table_id(&mut self, table_id: &i32) -> Option<Vec<String>> {
         if let Ok(rows) = self.connection.query("SELECT * FROM random_table_element WHERE table_id = $1", &[table_id]) {
             if let Ok(elements_option) = DatabaseHandler::row_vec_to_element_vec(&rows) {
