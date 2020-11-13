@@ -23,6 +23,7 @@ async fn main() {
 
     let handler_clone = Arc::clone(&handler);
     let account_by_id = warp::path!("account" / i32)
+        .and(warp::path::end())
         .map(move |id| {
             match handler_clone
                 .lock()
@@ -35,6 +36,7 @@ async fn main() {
 
     let handler_clone = Arc::clone(&handler);
     let account_by_name = warp::path!("account" / String)
+        .and(warp::path::end())
         .map(move |name| {
             match handler_clone
                 .lock()
