@@ -102,6 +102,15 @@ impl DatabaseHandler {
         results
     }
 
+    pub fn find_table_elements_by_table_id(&mut self, table_id: &i32) -> Option<Vec<String>> {
+        if let Ok(rows) = self.connection.query("SELECT * FROM random_table_element WHERE table_id = $1", &[table_id]) {
+            if let Ok(elements_option) = DatabaseHandler::row_vec_to_element_vec(&rows) {
+                return elements_option;
+            }
+        }
+        None
+    }
+
     pub fn delete_table_and_elements(&mut self, table: &random_table::Table) -> Result<random_table::Table, PgError> {
         let mut transaction = self.connection.transaction()?;
 
