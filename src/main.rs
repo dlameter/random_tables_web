@@ -45,6 +45,16 @@ async fn main() {
                 }
         });
 
+    let handler_clone = Arc::clone(&handler);
+    let tables_by_account_id = warp::path!("account" / i32 / "tables")
+        .and(warp::path::end())
+        .map(move |account_id| {
+            let tables = handler_clone.lock()
+                .unwrap()
+                .list_tables_by_creator_id(&account_id);
+            format!("{:?}", tables)
+        });
+
     let templator = Templator::new("./_layout/".to_string(), "./_includes/".to_string());
     let templator = Arc::new(templator);
     
@@ -57,7 +67,7 @@ async fn main() {
 
     let static_files = warp::path("static").and(warp::fs::dir("static"));
 
-    let routes = warp::get().and(index.or(index_redirect).or(static_files).or(account_by_id).or(account_by_name));
+    let routes = warp::get().and(index.or(index_redirect).or(static_files).or(account_by_id).or(account_by_name).or(tables_by_account_id));
 
     warp::serve(routes)
         .run(([127,0,0,1], 3030))
