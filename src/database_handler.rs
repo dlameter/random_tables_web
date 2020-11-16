@@ -52,19 +52,10 @@ impl DatabaseHandler {
         DatabaseHandler::row_to_account(&row)?
     }
     
-    fn row_to_account(row: &postgres::row::Row) -> Result<account::Account, String> {
-        let id: i32 = match row.try_get(account::COLUMN_ACCOUNT_ID) {
-            Ok(value) => value,
-            Err(error) => return Err(format!("Failed to get column {} with error: {}", account::COLUMN_ACCOUNT_ID, error)),
-        };
-        let name: String = match row.try_get(account::COLUMN_ACCOUNT_NAME) {
-            Ok(value) => value,
-            Err(error) => return Err(format!("Failed to get column {} with error: {}", account::COLUMN_ACCOUNT_NAME, error)),
-        };
-        let password: String = match row.try_get(account::COLUMN_ACCOUNT_PASSWORD) {
-            Ok(value) => value,
-            Err(error) => return Err(format!("Failed to get column {} with error: {}", account::COLUMN_ACCOUNT_PASSWORD, error)),
-        };
+    fn row_to_account(row: &postgres::row::Row) -> Result<account::Account, PgError> {
+        let id: i32 = row.try_get(account::COLUMN_ACCOUNT_ID)?;
+        let name: String = row.try_get(account::COLUMN_ACCOUNT_NAME)?;
+        let password: String = row.try_get(account::COLUMN_ACCOUNT_PASSWORD)?;
 
         Ok(account::Account {
             id,
