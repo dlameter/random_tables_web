@@ -22,7 +22,7 @@ async fn main() {
     let handler = Arc::new(Mutex::new(handler));
 
     let handler_clone = Arc::clone(&handler);
-    let account_by_id = warp::path!("account" / i32)
+    let account_by_id = warp::path!(i32)
         .and(warp::path::end())
         .map(move |id| {
             match handler_clone
@@ -35,7 +35,7 @@ async fn main() {
         });
 
     let handler_clone = Arc::clone(&handler);
-    let account_by_name = warp::path!("account" / String)
+    let account_by_name = warp::path!(String)
         .and(warp::path::end())
         .map(move |name| {
             match handler_clone
@@ -48,7 +48,7 @@ async fn main() {
         });
 
     let handler_clone = Arc::clone(&handler);
-    let tables_by_account_id = warp::path!("account" / i32 / "tables")
+    let tables_by_account_id = warp::path!(i32 / "tables")
         .and(warp::path::end())
         .map(move |account_id| {
             let tables = handler_clone.lock()
@@ -56,6 +56,13 @@ async fn main() {
                 .list_tables_by_creator_id(&account_id);
             format!("{:?}", tables)
         });
+
+    let accounts_endpoint = warp::path("account")
+        .and(
+            account_by_id
+            .or(account_by_name)
+            .or(tables_by_account_id)
+        );
 
     let templator = Templator::new("./_layout/".to_string(), "./_includes/".to_string());
     let templator = Arc::new(templator);
@@ -69,7 +76,7 @@ async fn main() {
 
     let static_files = warp::path("static").and(warp::fs::dir("static"));
 
-    let routes = warp::get().and(index.or(index_redirect).or(static_files).or(account_by_id).or(account_by_name).or(tables_by_account_id));
+    let routes = warp::get().and(index.or(index_redirect).or(static_files).or(accounts_endpoint));
 
     warp::serve(routes)
         .run(([127,0,0,1], 3030))
