@@ -21,17 +21,13 @@ async fn main() {
         Err(e) => panic!(format!("Failed to create database handler with error: {}", e)),
     };
     let handler = Arc::new(Mutex::new(handler));
-
     let handler_clone = Arc::clone(&handler);
     let account_by_id = warp::get().and(warp::path!("id" / i32))
         .and(warp::path::end())
         .map(move |id| {
-            match handler_clone
-                .lock()
-                .unwrap()
-                .find_account_by_id(&id) {
-                    Some(account) => format!("{:?}", account),
-                    None => format!("Could not find user with id {}", id),
+            match handler_clone.lock().unwrap().find_account_by_id(&id) {
+                Some(account) => format!("{:?}", account),
+                None => format!("Could not find user with id {}", id),
             }
         });
 
@@ -39,22 +35,17 @@ async fn main() {
     let account_by_name = warp::get().and(warp::path!("name" / String))
         .and(warp::path::end())
         .map(move |name| {
-            match handler_clone
-                .lock()
-                .unwrap()
-                .find_account_by_name(&name) {
-                    Some(account) => format!("{:?}", account),
-                    None => format!("Could not find user with name {}", name),
-                }
+            match handler_clone.lock().unwrap().find_account_by_name(&name) {
+                Some(account) => format!("{:?}", account),
+                None => format!("Could not find user with name {}", name),
+            }
         });
 
     let handler_clone = Arc::clone(&handler);
     let tables_by_account_id = warp::get().and(warp::path!("id" / i32 / "tables"))
         .and(warp::path::end())
         .map(move |account_id| {
-            let tables = handler_clone.lock()
-                .unwrap()
-                .list_tables_by_creator_id(&account_id);
+            let tables = handler_clone.lock().unwrap().list_tables_by_creator_id(&account_id);
             format!("{:?}", tables)
         });
 
@@ -62,12 +53,10 @@ async fn main() {
     let delete_account = warp::get().and(warp::path!("id" / i32 / "delete"))
         .and(warp::path::end())
         .map(move |id| {
-            match handler_clone.lock()
-                .unwrap()
-                .delete_account(&id) {
-                    Ok(account) => format!("{:?}", account),
-                    Err(error) => format!("Failed to delete account id {} with error: {}", id, error),
-                }
+            match handler_clone.lock().unwrap().delete_account(&id) {
+                Ok(account) => format!("{:?}", account),
+                Err(error) => format!("Failed to delete account id {} with error: {}", id, error),
+            }
         });
 
     let handler_clone = Arc::clone(&handler);
