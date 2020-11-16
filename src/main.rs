@@ -57,11 +57,24 @@ async fn main() {
             format!("{:?}", tables)
         });
 
+    let handler_clone = Arc::clone(&handler);
+    let delete_account = warp::path!(i32 / "delete")
+        .and(warp::path::end())
+        .map(move |id| {
+            match handler_clone.lock()
+                .unwrap()
+                .delete_account(&id) {
+                    Ok(account) => format!("{:?}", account),
+                    Err(error) => format!("Failed to delete account id {} with error: {}", id, error),
+                }
+        });
+
     let accounts_endpoint = warp::path("account")
         .and(
             account_by_id
             .or(account_by_name)
             .or(tables_by_account_id)
+            .or(delete_account)
         );
 
     let templator = Templator::new("./_layout/".to_string(), "./_includes/".to_string());
