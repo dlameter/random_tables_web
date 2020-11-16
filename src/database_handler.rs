@@ -46,6 +46,11 @@ impl DatabaseHandler {
             Err(_) => None,
         }
     }
+
+    pub fn delete_account(&mut self, id: &i32) -> Result<account::Account, PgError> {
+        let row = self.connection.query_one("DELETE FROM account WHERE id = $1 RETURNING *", &[id])?;
+        DatabaseHandler::row_to_account(&row)?
+    }
     
     fn row_to_account(row: &postgres::row::Row) -> Result<account::Account, String> {
         let id: i32 = match row.try_get(account::COLUMN_ACCOUNT_ID) {
