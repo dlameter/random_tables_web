@@ -48,7 +48,7 @@ impl DatabaseHandler {
     }
 
     pub fn delete_account(&mut self, id: &i32) -> Result<account::Account, PgError> {
-        let row = self.connection.query_one("DELETE FROM account WHERE id = $1 RETURNING *", &[id])?;
+        let row = self.connection.query_one("DELETE FROM account WHERE account_id = $1 RETURNING *", &[id])?;
         DatabaseHandler::row_to_account(&row)
     }
     
