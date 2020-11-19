@@ -48,7 +48,7 @@ impl DatabaseHandler {
     }
 
     pub fn update_account(&mut self, account: &account::Account) -> Result<account::Account, PgError> {
-        let row = self.connection.query_one("UPDATE account SET username = $1, password_hash = $2 WHERE account_id = $3", &[&account.name, &account.password, &account.id])?;
+        let row = self.connection.query_one("UPDATE account SET username = $1, password_hash = $2 WHERE account_id = $3 RETURNING *", &[&account.name, &account.password, &account.id])?;
         DatabaseHandler::row_to_account(&row)
     }
 
