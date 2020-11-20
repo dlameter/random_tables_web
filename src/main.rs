@@ -16,11 +16,24 @@ mod data;
 
 #[tokio::main]
 async fn main() {
+    let templator = Templator::new("./_layout/".to_string(), "./_includes/".to_string());
+    let templator = Arc::new(templator);
+    
+    let template_file = move |(file_path, globals)| warp::reply::html(templator.clone().render_file(file_path, &globals));
+
+    let index = warp::get().and(warp::path("index.html"))
+        .map(|| (Path::new("index.html"), object!({})))
+        .map(template_file);
+    let index_redirect = warp::get().and(warp::path::end().map(|| warp::redirect(Uri::from_static("/index.html"))));
+
+    let static_files = warp::get().and(warp::path("static").and(warp::fs::dir("static")));
+
     let handler = match DatabaseHandler::new() {
         Ok(c) => c,
         Err(e) => panic!(format!("Failed to create database handler with error: {}", e)),
     };
     let handler = Arc::new(Mutex::new(handler));
+
     let handler_clone = Arc::clone(&handler);
     let account_by_id = warp::get().and(warp::path!("id" / i32))
         .and(warp::path::end())
@@ -114,18 +127,6 @@ async fn main() {
             .or(create_account)
             .or(update_account)
         );
-
-    let templator = Templator::new("./_layout/".to_string(), "./_includes/".to_string());
-    let templator = Arc::new(templator);
-    
-    let template_file = move |(file_path, globals)| warp::reply::html(templator.clone().render_file(file_path, &globals));
-
-    let index = warp::get().and(warp::path("index.html"))
-        .map(|| (Path::new("index.html"), object!({})))
-        .map(template_file);
-    let index_redirect = warp::get().and(warp::path::end().map(|| warp::redirect(Uri::from_static("/index.html"))));
-
-    let static_files = warp::get().and(warp::path("static").and(warp::fs::dir("static")));
 
     let routes = accounts_endpoint.or(index.or(index_redirect).or(static_files));
 
