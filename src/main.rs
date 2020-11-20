@@ -20,10 +20,12 @@ async fn main() {
     let templator = Arc::new(templator);
     
     let template_file = move |(file_path, globals)| warp::reply::html(templator.clone().render_file(file_path, &globals));
+    let template_file = Arc::new(Mutex::new(template_file));
 
+    let template_file_clone = Arc::clone(&template_file);
     let index = warp::get().and(warp::path("index.html"))
         .map(|| (Path::new("index.html"), object!({})))
-        .map(template_file);
+        .map(move |args| template_file_clone.lock().unwrap()(args));
     let index_redirect = warp::get().and(warp::path::end().map(|| warp::redirect(Uri::from_static("/index.html"))));
 
     let static_files = warp::get().and(warp::path("static").and(warp::fs::dir("static")));
@@ -35,12 +37,19 @@ async fn main() {
     let handler = Arc::new(Mutex::new(handler));
 
     let handler_clone = Arc::clone(&handler);
+    let template_file_clone = Arc::clone(&template_file);
     let account_by_id = warp::get().and(warp::path!("id" / i32))
         .and(warp::path::end())
         .map(move |id| {
             match handler_clone.lock().unwrap().find_account_by_id(&id) {
-                Some(account) => format!("{:?}", account),
-                None => format!("Could not find user with id {}", id),
+                Some(account) => {
+                    let globals = object!({
+                        "username": account.name,
+                        "userid": account.id,
+                    });
+                    template_file_clone.lock().unwrap()((Path::new("user.html"), globals))
+                },
+                None => warp::reply::html(format!("Could not find user with id {}", id)),
             }
         });
 
