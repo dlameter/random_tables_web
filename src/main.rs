@@ -124,8 +124,7 @@ fn build_create_account_filter(handler: &SharedDatabaseHandler) -> BoxedFilter<(
     let handler_clone = Arc::clone(handler);
     warp::post().and(warp::path("create")).and(warp::path::end()).and(warp::body::content_length_limit(1024 * 32)).and(warp::body::json())
         .map(move |json_map: HashMap<String, String>| {
-            if let Some(username) = json_map.get("username") {
-            if let Some(password) = json_map.get("password") {
+            if let (Some(username), Some(password)) = (json_map.get("username"), json_map.get("password")) {
                 let new_account = data::account::Account {
                     id: 0,
                     name: username.clone(),
@@ -136,7 +135,6 @@ fn build_create_account_filter(handler: &SharedDatabaseHandler) -> BoxedFilter<(
                     Ok(_) => return "Account created".to_string(),
                     Err(error) => return format!("Failed to create account with error: {}", error),
                 }
-            }
             }
             format!("Failed to create account, username or password not supplied.")
         }).boxed()
