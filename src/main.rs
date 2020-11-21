@@ -57,13 +57,7 @@ async fn main() {
 
     let account_by_name = build_account_by_name_filter(&handler);
 
-    let handler_clone = Arc::clone(&handler);
-    let tables_by_account_id = warp::get().and(warp::path!("id" / i32 / "tables"))
-        .and(warp::path::end())
-        .map(move |account_id| {
-            let tables = handler_clone.lock().unwrap().list_tables_by_creator_id(&account_id);
-            format!("{:?}", tables)
-        });
+    let tables_by_account_id = build_tables_by_account_id_filter(&handler);
 
     let delete_account = build_delete_account_filter(&handler);
 
@@ -149,5 +143,14 @@ fn build_delete_account_filter(handler: &SharedDatabaseHandler) -> BoxedFilter<(
                 Ok(account) => format!("{:?}", account),
                 Err(error) => format!("Failed to delete account id {} with error: {}", id, error),
             }
+        }).boxed()
+}
+
+fn build_tables_by_account_id_filter(handler: &SharedDatabaseHandler) -> BoxedFilter<(impl warp::Reply,)> {
+    let handler_clone = Arc::clone(handler);
+    warp::get().and(warp::path!("id" / i32 / "tables")).and(warp::path::end())
+        .map(move |account_id| {
+            let tables = handler_clone.lock().unwrap().list_tables_by_creator_id(&account_id);
+            format!("{:?}", tables)
         }).boxed()
 }
