@@ -39,33 +39,25 @@ async fn main() {
     };
     let handler = Arc::new(Mutex::new(handler));
 
-    let account_by_id = build_account_by_id_filter(&handler, &templator);
-
-    let account_by_name = build_account_by_name_filter(&handler);
-
-    let tables_by_account_id = build_tables_by_account_id_filter(&handler);
-
-    let delete_account = build_delete_account_filter(&handler);
-
-    let create_account = build_create_account_filter(&handler);
-
-    let update_account = build_update_account_filter(&handler);
-
-    let accounts_endpoint = warp::path("account")
-        .and(
-            account_by_id
-            .or(account_by_name)
-            .or(tables_by_account_id)
-            .or(delete_account)
-            .or(create_account)
-            .or(update_account)
-        );
+    let accounts_endpoint = build_account_endpoint(&handler, &templator);
 
     let routes = accounts_endpoint.or(index.or(index_redirect).or(static_files));
 
     warp::serve(routes)
         .run(([127,0,0,1], 3030))
         .await;
+}
+
+fn build_account_endpoint(handler: &SharedDatabaseHandler, templator: &Arc<Templator>) -> BoxedFilter<(impl warp::Reply,)> {
+    warp::path("account")
+        .and(
+            build_account_by_id_filter(handler, templator)
+            .or(build_account_by_name_filter(handler))
+            .or(build_tables_by_account_id_filter(handler))
+            .or(build_delete_account_filter(handler))
+            .or(build_create_account_filter(handler))
+            .or(build_update_account_filter(handler))
+        ).boxed()
 }
 
 fn build_account_by_id_filter(handler: &SharedDatabaseHandler, templator: &Arc<Templator>) -> BoxedFilter<(impl warp::Reply,)> {
