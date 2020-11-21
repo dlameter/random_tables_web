@@ -53,15 +53,7 @@ async fn main() {
             }
         });
 
-    let handler_clone = Arc::clone(&handler);
-    let account_by_name = warp::get().and(warp::path!("name" / String))
-        .and(warp::path::end())
-        .map(move |name| {
-            match handler_clone.lock().unwrap().find_account_by_name(&name) {
-                Some(account) => format!("{:?}", account),
-                None => format!("Could not find user with name {}", name),
-            }
-        });
+    let account_by_name = build_account_by_name_filter(&handler);
 
     let handler_clone = Arc::clone(&handler);
     let tables_by_account_id = warp::get().and(warp::path!("id" / i32 / "tables"))
@@ -142,4 +134,15 @@ async fn main() {
     warp::serve(routes)
         .run(([127,0,0,1], 3030))
         .await;
+}
+
+fn build_account_by_name_filter(handler: &Arc<Mutex<DatabaseHandler>>) -> warp::filters::BoxedFilter<(impl warp::Reply,)> {
+    let handler_clone = Arc::clone(handler);
+    warp::get().and(warp::path!("name" / String)).and(warp::path::end())
+        .map(move |name| {
+            match handler_clone.lock().unwrap().find_account_by_name(&name) {
+                Some(account) => format!("{:?}", account),
+                None => format!("Could not find user with name {}", name),
+            }
+        }).boxed()
 }
