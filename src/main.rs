@@ -21,7 +21,8 @@ async fn main() {
     let templator = Templator::new("./_layout/".to_string(), "./_includes/".to_string());
     let templator = Arc::new(templator);
     
-    let template_file = move |(file_path, globals)| warp::reply::html(templator.clone().render_file(file_path, &globals));
+    let templator_clone = Arc::clone(&templator);
+    let template_file = move |(file_path, globals)| warp::reply::html(templator_clone.render_file(file_path, &globals));
     let template_file = Arc::new(Mutex::new(template_file));
 
     let template_file_clone = Arc::clone(&template_file);
@@ -38,22 +39,7 @@ async fn main() {
     };
     let handler = Arc::new(Mutex::new(handler));
 
-    let handler_clone = Arc::clone(&handler);
-    let template_file_clone = Arc::clone(&template_file);
-    let account_by_id = warp::get().and(warp::path!("id" / i32))
-        .and(warp::path::end())
-        .map(move |id| {
-            match handler_clone.lock().unwrap().find_account_by_id(&id) {
-                Some(account) => {
-                    let globals = object!({
-                        "username": account.name,
-                        "userid": account.id,
-                    });
-                    template_file_clone.lock().unwrap()((Path::new("account.html"), globals))
-                },
-                None => warp::reply::html(format!("Could not find user with id {}", id)),
-            }
-        });
+    let account_by_id = build_account_by_id_filter(&handler, &templator);
 
     let account_by_name = build_account_by_name_filter(&handler);
 
@@ -80,6 +66,27 @@ async fn main() {
     warp::serve(routes)
         .run(([127,0,0,1], 3030))
         .await;
+}
+
+fn build_account_by_id_filter(handler: &SharedDatabaseHandler, templator: &Arc<Templator>) -> BoxedFilter<(impl warp::Reply,)> {
+    let handler_clone = Arc::clone(handler);
+    let templator_clone = Arc::clone(templator);
+    let template_file = move |(file_path, globals)| warp::reply::html(templator_clone.render_file(file_path, &globals));
+    warp::get().and(warp::path!("id" / i32)).and(warp::path::end())
+        .map(move |id| {
+            match handler_clone.lock().unwrap().find_account_by_id(&id) {
+                Some(account) => {
+                    let globals = object!({
+                        "username": account.name,
+                        "userid": account.id,
+                    });
+                    template_file((Path::new("account.html"), globals))
+                },
+                None => {
+                    warp::reply::html(format!("Could not find user with id {}", id))
+                },
+            }
+        }).boxed()
 }
 
 fn build_account_by_name_filter(handler: &SharedDatabaseHandler) -> BoxedFilter<(impl warp::Reply,)> {
