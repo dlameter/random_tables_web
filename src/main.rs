@@ -109,7 +109,7 @@ async fn main() {
         .await;
 }
 
-fn build_account_by_name_filter(handler: &Arc<Mutex<DatabaseHandler>>) -> warp::filters::BoxedFilter<(impl warp::Reply,)> {
+fn build_account_by_name_filter(handler: &SharedDatabaseHandler) -> BoxedFilter<(impl warp::Reply,)> {
     let handler_clone = Arc::clone(handler);
     warp::get().and(warp::path!("name" / String)).and(warp::path::end())
         .map(move |name| {
@@ -142,7 +142,7 @@ fn build_create_account_filter(handler: &SharedDatabaseHandler) -> BoxedFilter<(
         }).boxed()
 }
 
-fn build_delete_account_filter(handler: &Arc<Mutex<DatabaseHandler>>) -> warp::filters::BoxedFilter<(impl warp::Reply,)> {
+fn build_delete_account_filter(handler: &SharedDatabaseHandler) -> BoxedFilter<(impl warp::Reply,)> {
     let handler_clone = Arc::clone(handler);
     warp::get().and(warp::path!("id" / i32 / "delete")).and(warp::path::end())
         .map(move |id| {
