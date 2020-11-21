@@ -3,7 +3,7 @@ use std::path::Path;
 use std::sync::Arc;
 use std::sync::Mutex;
 
-use warp::{http::Uri, Filter};
+use warp::{http::Uri, Filter, filters::BoxedFilter};
 use liquid::object;
 
 mod templating;
@@ -13,6 +13,8 @@ mod database_handler;
 use database_handler::DatabaseHandler;
 
 mod data;
+
+type SharedDatabaseHandler = Arc<Mutex<DatabaseHandler>>;
 
 #[tokio::main]
 async fn main() {
@@ -65,28 +67,7 @@ async fn main() {
 
     let delete_account = build_delete_account_filter(&handler);
 
-    let handler_clone = Arc::clone(&handler);
-    let create_account = warp::post().and(warp::path("create"))
-        .and(warp::path::end())
-        .and(warp::body::content_length_limit(1024 * 32))
-        .and(warp::body::json())
-        .map(move |json_map: HashMap<String, String>| {
-            if let Some(username) = json_map.get("username") {
-            if let Some(password) = json_map.get("password") {
-                let new_account = data::account::Account {
-                    id: 0,
-                    name: username.clone(),
-                    password: password.clone(),
-                };
-
-                match handler_clone.lock().unwrap().create_account(&new_account) {
-                    Ok(_) => return "Account created".to_string(),
-                    Err(error) => return format!("Failed to create account with error: {}", error),
-                }
-            }
-            }
-            format!("Failed to create account, username or password not supplied.")
-        });
+    let create_account = build_create_account_filter(&handler);
 
     let handler_clone = Arc::clone(&handler);
     let update_account = warp::post().and(warp::path("update"))
@@ -136,6 +117,28 @@ fn build_account_by_name_filter(handler: &Arc<Mutex<DatabaseHandler>>) -> warp::
                 Some(account) => format!("{:?}", account),
                 None => format!("Could not find user with name {}", name),
             }
+        }).boxed()
+}
+
+fn build_create_account_filter(handler: &SharedDatabaseHandler) -> BoxedFilter<(impl warp::Reply,)> {
+    let handler_clone = Arc::clone(handler);
+    warp::post().and(warp::path("create")).and(warp::path::end()).and(warp::body::content_length_limit(1024 * 32)).and(warp::body::json())
+        .map(move |json_map: HashMap<String, String>| {
+            if let Some(username) = json_map.get("username") {
+            if let Some(password) = json_map.get("password") {
+                let new_account = data::account::Account {
+                    id: 0,
+                    name: username.clone(),
+                    password: password.clone(),
+                };
+
+                match handler_clone.lock().unwrap().create_account(&new_account) {
+                    Ok(_) => return "Account created".to_string(),
+                    Err(error) => return format!("Failed to create account with error: {}", error),
+                }
+            }
+            }
+            format!("Failed to create account, username or password not supplied.")
         }).boxed()
 }
 
