@@ -69,28 +69,7 @@ async fn main() {
 
     let create_account = build_create_account_filter(&handler);
 
-    let handler_clone = Arc::clone(&handler);
-    let update_account = warp::post().and(warp::path("update"))
-        .and(warp::path::end())
-        .and(warp::body::content_length_limit(1024 * 32))
-        .and(warp::body::json())
-        .map(move |json_map: HashMap<String, String>| {
-            if let (Some(id), Some(name), Some(password)) = (json_map.get("id"), json_map.get("name"), json_map.get("password")) {
-                if let Ok(id) = i32::from_str_radix(id, 10) {
-                    let updated_account = data::account::Account {
-                        id,
-                        name: name.clone(),
-                        password: password.clone(),
-                    };
-                    
-                    match handler_clone.lock().unwrap().update_account(&updated_account) {
-                        Ok(account) => return format!("Updated account to {:?}", account),
-                        Err(error) => return format!("Failed to update account with error: {}", error),
-                    }
-                }
-            }
-            format!("Failed to update account, name, password, not specified or id not an int.")
-        });
+    let update_account = build_update_account_filter(&handler);
 
     let accounts_endpoint = warp::path("account")
         .and(
@@ -137,6 +116,28 @@ fn build_create_account_filter(handler: &SharedDatabaseHandler) -> BoxedFilter<(
                 }
             }
             format!("Failed to create account, username or password not supplied.")
+        }).boxed()
+}
+
+fn build_update_account_filter(handler: &SharedDatabaseHandler) -> BoxedFilter<(impl warp::Reply,)> {
+    let handler_clone = Arc::clone(handler);
+    warp::post().and(warp::path("update")).and(warp::path::end()).and(warp::body::content_length_limit(1024 * 32)).and(warp::body::json())
+        .map(move |json_map: HashMap<String, String>| {
+            if let (Some(id), Some(name), Some(password)) = (json_map.get("id"), json_map.get("name"), json_map.get("password")) {
+                if let Ok(id) = i32::from_str_radix(id, 10) {
+                    let updated_account = data::account::Account {
+                        id,
+                        name: name.clone(),
+                        password: password.clone(),
+                    };
+                    
+                    match handler_clone.lock().unwrap().update_account(&updated_account) {
+                        Ok(account) => return format!("Updated account to {:?}", account),
+                        Err(error) => return format!("Failed to update account with error: {}", error),
+                    }
+                }
+            }
+            format!("Failed to update account, name, password, not specified or id not an int.")
         }).boxed()
 }
 
