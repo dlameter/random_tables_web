@@ -23,12 +23,9 @@ async fn main() {
     
     let templator_clone = Arc::clone(&templator);
     let template_file = move |(file_path, globals)| warp::reply::html(templator_clone.render_file(file_path, &globals));
-    let template_file = Arc::new(Mutex::new(template_file));
-
-    let template_file_clone = Arc::clone(&template_file);
     let index = warp::get().and(warp::path("index.html"))
         .map(|| (Path::new("index.html"), object!({})))
-        .map(move |args| template_file_clone.lock().unwrap()(args));
+        .map(move |args| template_file(args));
     let index_redirect = warp::get().and(warp::path::end().map(|| warp::redirect(Uri::from_static("/index.html"))));
 
     let static_files = warp::get().and(warp::path("static").and(warp::fs::dir("static")));
