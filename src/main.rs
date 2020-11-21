@@ -63,15 +63,7 @@ async fn main() {
             format!("{:?}", tables)
         });
 
-    let handler_clone = Arc::clone(&handler);
-    let delete_account = warp::get().and(warp::path!("id" / i32 / "delete"))
-        .and(warp::path::end())
-        .map(move |id| {
-            match handler_clone.lock().unwrap().delete_account(&id) {
-                Ok(account) => format!("{:?}", account),
-                Err(error) => format!("Failed to delete account id {} with error: {}", id, error),
-            }
-        });
+    let delete_account = build_delete_account_filter(&handler);
 
     let handler_clone = Arc::clone(&handler);
     let create_account = warp::post().and(warp::path("create"))
@@ -143,6 +135,17 @@ fn build_account_by_name_filter(handler: &Arc<Mutex<DatabaseHandler>>) -> warp::
             match handler_clone.lock().unwrap().find_account_by_name(&name) {
                 Some(account) => format!("{:?}", account),
                 None => format!("Could not find user with name {}", name),
+            }
+        }).boxed()
+}
+
+fn build_delete_account_filter(handler: &Arc<Mutex<DatabaseHandler>>) -> warp::filters::BoxedFilter<(impl warp::Reply,)> {
+    let handler_clone = Arc::clone(handler);
+    warp::get().and(warp::path!("id" / i32 / "delete")).and(warp::path::end())
+        .map(move |id| {
+            match handler_clone.lock().unwrap().delete_account(&id) {
+                Ok(account) => format!("{:?}", account),
+                Err(error) => format!("Failed to delete account id {} with error: {}", id, error),
             }
         }).boxed()
 }
