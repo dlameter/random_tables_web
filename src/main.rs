@@ -47,7 +47,7 @@ async fn main() {
                         "username": account.name,
                         "userid": account.id,
                     });
-                    template_file_clone.lock().unwrap()((Path::new("user.html"), globals))
+                    template_file_clone.lock().unwrap()((Path::new("account.html"), globals))
                 },
                 None => warp::reply::html(format!("Could not find user with id {}", id)),
             }
