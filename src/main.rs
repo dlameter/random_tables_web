@@ -1,20 +1,14 @@
 use std::collections::HashMap;
-use std::path::{Path, PathBuf};
-use std::sync::Arc;
-use std::sync::Mutex;
+use std::sync::{Arc, Mutex};
 
-use liquid::object;
-use liquid::*;
-use warp::Filter;
-use warp::{filters::BoxedFilter, http::Uri};
+use warp::{Filter, filters::BoxedFilter, http::Uri};
 
+use random_tables_web::data;
 use random_tables_web::database_handler::DatabaseHandler;
-use random_tables_web::templating::Templator;
 use random_tables_web::PathAndObject;
+use random_tables_web::templating::Templator;
 
 type SharedDatabaseHandler = Arc<Mutex<DatabaseHandler>>;
-
-type Args = (Path, Object);
 
 #[tokio::main]
 async fn main() {
@@ -22,16 +16,11 @@ async fn main() {
 
     let templator = Arc::new(Mutex::new(templator));
 
-    let tc = templator.clone();
+    let templator_clone = templator.clone();
     let index = warp::get()
         .and(warp::path("index.html"))
-        .map(|| PathAndObject {
-            path: PathBuf::from("index.html"),
-            object: object!({}),
-        })
-        .map(move |pa: PathAndObject| pa.render_file(tc.clone()));
-
-    //        .map(move |args| template_file_clone.lock().unwrap()(args));
+        .map(|| PathAndObject::default())
+        .map(move |pa: PathAndObject| pa.render_file(templator_clone.clone()));
 
     let index_redirect =
         warp::get().and(warp::path::end().map(|| warp::redirect(Uri::from_static("/index.html"))));
@@ -75,16 +64,6 @@ fn build_account_by_id_filter(
     templator: Arc<Mutex<Templator>>,
 ) -> BoxedFilter<(impl warp::Reply,)> {
     let handler_clone = Arc::clone(handler);
-
-    let index = warp::get()
-        .and(warp::path("index.html"))
-        .map(|| PathAndObject::default()) // index.html
-        .map(|pa: PathAndObject| pa.render_file(templator.clone()));
-
-    // let templator_clone = Arc::clone(templator);
-    // let template_file = move |(file_path, globals)| {
-    //     warp::reply::html(templator_clone.render_file(file_path, &globals))
-    // };
     warp::get()
         .and(warp::path!("id" / i32))
         .and(warp::path::end())
@@ -92,6 +71,7 @@ fn build_account_by_id_filter(
             move |id| match handler_clone.lock().unwrap().find_account_by_id(&id) {
                 Some(account) => {
                     let pa = PathAndObject::new_account(&account.name, account.id);
+                    // Somehow have these warp::reply::html wrap once
                     warp::reply::html(pa.render_file(templator.clone()))
                 }
                 None => warp::reply::html(format!("Could not find user with id {}", id)),

@@ -1,25 +1,27 @@
-use std::collections::HashMap;
 use std::path::PathBuf;
-use std::sync::Arc;
-use std::sync::Mutex;
+use std::sync::{Arc, Mutex};
 
 use liquid::object;
-use liquid::*;
-use warp::Filter;
-use warp::{filters::BoxedFilter, http::Uri};
 
-mod data;
-mod database_handler;
-mod templating;
+pub mod data;
+pub mod database_handler;
+pub mod templating;
 
 use templating::Templator;
 
 pub struct PathAndObject {
     path: PathBuf,
-    object: Object,
+    object: liquid::Object,
 }
 
 impl PathAndObject {
+    pub fn default() -> Self {
+        Self {
+            path: PathBuf::from("index.html"),
+            object: object!({}),
+        }
+    }
+
     pub fn new_account(name: &str, id: i32) -> Self {
         Self {
             path: PathBuf::from("account.html"),
