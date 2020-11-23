@@ -1,11 +1,10 @@
-use std::collections::HashMap;
 use std::borrow::Cow;
-use std::io::prelude::*;
+use std::collections::HashMap;
 use std::fs;
-use std::fs::{File};
+use std::fs::File;
+use std::io::prelude::*;
 use std::path::Path;
 
-use liquid;
 use liquid::*;
 
 pub struct Templator {
@@ -32,16 +31,23 @@ impl Templator {
 
         let output = match self.process_metadata(&file_metadata, globals) {
             Ok(s) => s,
-            Err(e) => return format!("Failed to process metadata with error: {}", e).to_string()
+            Err(e) => return format!("Failed to process metadata with error: {}", e).to_string(),
         };
 
         output
     }
 
-    fn process_metadata(&self, file_metadata: &HashMap<String, String>, globals: &Object) -> Result<String, String> {
+    fn process_metadata(
+        &self,
+        file_metadata: &HashMap<String, String>,
+        globals: &Object,
+    ) -> Result<String, String> {
         let mut globals = Templator::merge_globals(&file_metadata, globals);
 
-        let template = self.parser.parse(file_metadata.get("content").unwrap()).unwrap();
+        let template = self
+            .parser
+            .parse(file_metadata.get("content").unwrap())
+            .unwrap();
         let output = template.render(&globals).unwrap();
 
         let output = match file_metadata.get(&"layout".to_string()) {
@@ -54,7 +60,7 @@ impl Templator {
                 Templator::add_content_to_global(&mut globals, output);
 
                 self.process_metadata(&layout_metadata, &globals).unwrap()
-            },
+            }
             None => output,
         };
 
@@ -88,18 +94,24 @@ impl Templator {
             .unwrap()
     }
 
-    fn construct_liquid_complier(include_dir: &String) -> liquid::partials::EagerCompiler::<liquid::partials::InMemorySource> {
-        let mut compiler = liquid::partials::EagerCompiler::<liquid::partials::InMemorySource>::empty();
+    fn construct_liquid_complier(
+        include_dir: &String,
+    ) -> liquid::partials::EagerCompiler<liquid::partials::InMemorySource> {
+        let mut compiler =
+            liquid::partials::EagerCompiler::<liquid::partials::InMemorySource>::empty();
 
         match Templator::add_files_to_compiler(&mut compiler, include_dir) {
             Ok(_) => (),
-            Err(_) => print!("Failed to add files to compiler.\n"),
+            Err(_) => println!("Failed to add files to compiler."),
         }
 
         compiler
     }
 
-    fn add_files_to_compiler(compiler: &mut liquid::partials::EagerCompiler::<liquid::partials::InMemorySource>, include_dir: &String) -> std::io::Result<()> {
+    fn add_files_to_compiler(
+        compiler: &mut liquid::partials::EagerCompiler<liquid::partials::InMemorySource>,
+        include_dir: &String,
+    ) -> std::io::Result<()> {
         let dir = Path::new(include_dir);
 
         if dir.is_dir() {
@@ -116,8 +128,7 @@ impl Templator {
                     match Templator::get_file_contents(&path) {
                         Ok(contents) => {
                             compiler.add(file_name, contents);
-                            ()
-                        },
+                        }
                         Err(e) => println!("{}", e),
                     }
                 }
@@ -134,7 +145,9 @@ impl Templator {
         }
     }
 
-    fn create_layout_collection(layout_dir: &String) -> std::io::Result<HashMap<String, HashMap<String, String>>> {
+    fn create_layout_collection(
+        layout_dir: &String,
+    ) -> std::io::Result<HashMap<String, HashMap<String, String>>> {
         let mut layouts = HashMap::new();
 
         let dir = Path::new(layout_dir);
@@ -146,7 +159,10 @@ impl Templator {
 
                 match Templator::add_file_to_layout_collection(&mut layouts, &path) {
                     Ok(_) => (),
-                    Err(e) => println!("Failed to add layout file to layout collection. Error text: {}", e),
+                    Err(e) => println!(
+                        "Failed to add layout file to layout collection. Error text: {}",
+                        e
+                    ),
                 }
             }
         }
@@ -154,19 +170,32 @@ impl Templator {
         Ok(layouts)
     }
 
-    fn add_file_to_layout_collection(layouts: &mut HashMap<String, HashMap<String,String>>, file_path: &std::path::Path) -> Result<(), String> {
+    fn add_file_to_layout_collection(
+        layouts: &mut HashMap<String, HashMap<String, String>>,
+        file_path: &std::path::Path,
+    ) -> Result<(), String> {
         let file_stem: String = match file_path.file_stem().unwrap().to_os_string().into_string() {
             Ok(s) => s,
-            Err(os) => return Err(format!("File stem is not a valid Unicode string. Lossy result is: {}", os.to_string_lossy())),
+            Err(os) => {
+                return Err(format!(
+                    "File stem is not a valid Unicode string. Lossy result is: {}",
+                    os.to_string_lossy()
+                ))
+            }
         };
 
         let contents = match Templator::get_file_contents(file_path) {
             Ok(c) => c,
-            Err(e) => return Err(format!("Failed to add file to layout collection due to: {}", e)),
+            Err(e) => {
+                return Err(format!(
+                    "Failed to add file to layout collection due to: {}",
+                    e
+                ))
+            }
         };
 
         layouts.insert(file_stem, Templator::get_file_metadata(&contents));
-        
+
         Ok(())
     }
 
@@ -181,8 +210,7 @@ impl Templator {
                 metadata.insert("content".to_string(), file_string.clone());
 
                 metadata
-            }
-            else {
+            } else {
                 // Process first split portion for metadata
                 let mut metadata = Templator::process_frontmatter(split[1].to_string().clone());
 
@@ -191,8 +219,7 @@ impl Templator {
 
                 metadata
             }
-        }
-        else {
+        } else {
             let mut metadata = HashMap::new();
             metadata.insert("content".to_string(), file_string.clone());
 
@@ -209,13 +236,14 @@ impl Templator {
             let split: Vec<&str> = line.splitn(2, ":").collect();
 
             let key = split[0].trim();
-            if key.is_empty() { continue; }
+            if key.is_empty() {
+                continue;
+            }
 
             if split.len() > 1 {
                 let value = split[1].trim();
                 metadata.insert(key.to_string(), value.to_string());
-            }
-            else {
+            } else {
                 metadata.insert(key.to_string(), "".to_string());
             }
         }
@@ -237,13 +265,10 @@ impl Templator {
         let mut contents = String::new();
 
         match file.read_to_string(&mut contents) {
-            Ok(_) => {
-                Ok(contents)
-            },
+            Ok(_) => Ok(contents),
             Err(_) => Err(format!("Failed to read the contents of file: {}", path_str)),
         }
     }
-
 }
 
 #[cfg(test)]
@@ -423,7 +448,10 @@ mod tests {
     fn get_file_metadata_valid_file_with_three_frontmatter_seperators() {
         let mut expected_hashmap = HashMap::new();
         expected_hashmap.insert("testing".to_string(), "values".to_string());
-        expected_hashmap.insert("content".to_string(), "File contents go\n---\nhere.".to_string());
+        expected_hashmap.insert(
+            "content".to_string(),
+            "File contents go\n---\nhere.".to_string(),
+        );
 
         let file_content = "---\ntesting: values\n---\nFile contents go\n---\nhere.".to_string();
         let actual_hashmap = Templator::get_file_metadata(&file_content);
@@ -434,7 +462,10 @@ mod tests {
     #[test]
     fn get_file_metadata_invalid_file_with_one_frontmatter_seperator_at_start() {
         let mut expected_hashmap = HashMap::new();
-        expected_hashmap.insert("content".to_string(), "---\nFile contents go\nhere.".to_string());
+        expected_hashmap.insert(
+            "content".to_string(),
+            "---\nFile contents go\nhere.".to_string(),
+        );
 
         let file_content = "---\nFile contents go\nhere.".to_string();
         let actual_hashmap = Templator::get_file_metadata(&file_content);
@@ -445,7 +476,10 @@ mod tests {
     #[test]
     fn get_file_metadata_valid_file_with_one_frontmatter_seperator_in_middle() {
         let mut expected_hashmap = HashMap::new();
-        expected_hashmap.insert("content".to_string(), "File contents go\n---\nhere.".to_string());
+        expected_hashmap.insert(
+            "content".to_string(),
+            "File contents go\n---\nhere.".to_string(),
+        );
 
         let file_content = "File contents go\n---\nhere.".to_string();
         let actual_hashmap = Templator::get_file_metadata(&file_content);
@@ -470,6 +504,8 @@ mod tests {
         let path = Path::new("./this/is/not/a/valid/path.txt");
         let result = Templator::get_file_contents(&path);
         assert!(result.is_err());
-        assert!(result.expect_err("Error did not contain expected substring.").contains("Failed to open file"));
+        assert!(result
+            .expect_err("Error did not contain expected substring.")
+            .contains("Failed to open file"));
     }
 }
