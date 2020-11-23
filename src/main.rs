@@ -5,7 +5,7 @@ use warp::{Filter, filters::BoxedFilter, http::Uri};
 
 use random_tables_web::data;
 use random_tables_web::database_handler::DatabaseHandler;
-use random_tables_web::PathAndObject;
+use random_tables_web::PageTemplate;
 use random_tables_web::templating::Templator;
 
 type SharedDatabaseHandler = Arc<Mutex<DatabaseHandler>>;
@@ -19,8 +19,8 @@ async fn main() {
     let templator_clone = templator.clone();
     let index = warp::get()
         .and(warp::path("index.html"))
-        .map(|| PathAndObject::default())
-        .map(move |pa: PathAndObject| pa.render_file(templator_clone.clone()));
+        .map(|| PageTemplate::default())
+        .map(move |pt: PageTemplate| pt.render_with(templator_clone.clone()));
 
     let index_redirect =
         warp::get().and(warp::path::end().map(|| warp::redirect(Uri::from_static("/index.html"))));
@@ -68,13 +68,16 @@ fn build_account_by_id_filter(
         .and(warp::path!("id" / i32))
         .and(warp::path::end())
         .map(
-            move |id| match handler_clone.lock().unwrap().find_account_by_id(&id) {
-                Some(account) => {
-                    let pa = PathAndObject::new_account(&account.name, account.id);
-                    // Somehow have these warp::reply::html wrap once
-                    warp::reply::html(pa.render_file(templator.clone()))
-                }
-                None => warp::reply::html(format!("Could not find user with id {}", id)),
+            move |id| {
+                let string_response = match handler_clone.lock().unwrap().find_account_by_id(&id) {
+                        Some(account) => {
+                            let pt = PageTemplate::new_account(&account.name, account.id);
+                            pt.render_with(templator.clone())
+                        },
+                        None => format!("Could not find user with id {}", id),
+                    };
+
+                warp::reply::html(string_response)
             },
         )
         .boxed()

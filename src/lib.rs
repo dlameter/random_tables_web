@@ -9,12 +9,12 @@ pub mod templating;
 
 use templating::Templator;
 
-pub struct PathAndObject {
+pub struct PageTemplate {
     path: PathBuf,
     object: liquid::Object,
 }
 
-impl PathAndObject {
+impl PageTemplate {
     pub fn default() -> Self {
         Self {
             path: PathBuf::from("index.html"),
@@ -32,7 +32,7 @@ impl PathAndObject {
         }
     }
 
-    pub fn render_file(self, templator: Arc<Mutex<Templator>>) -> String {
+    pub fn render_with(self, templator: Arc<Mutex<Templator>>) -> String {
         let guard = templator.lock().unwrap();
         guard.render_file(&self.path, &self.object)
     }
