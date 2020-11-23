@@ -2,10 +2,10 @@ use std::borrow::Cow;
 use std::collections::HashMap;
 use std::fs;
 use std::fs::File;
-use std::io::prelude::*;
+use std::io::Read;
 use std::path::Path;
 
-use liquid::*;
+use liquid::{model, Object, ParserBuilder, ValueView};
 
 pub struct Templator {
     layout_collection: HashMap<String, HashMap<String, String>>,
