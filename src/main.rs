@@ -26,7 +26,7 @@ async fn main() {
 
     let static_files = warp::get().and(warp::path("static").and(warp::fs::dir("static")));
 
-    let handler = match DatabaseHandler::new() {
+    let handler = match DatabaseHandler::new("localhost", "random_tables", "postgres", "postgres") {
         Ok(c) => c,
         Err(e) => panic!(format!(
             "Failed to create database handler with error: {}",

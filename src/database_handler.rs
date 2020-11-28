@@ -8,8 +8,9 @@ pub struct DatabaseHandler {
 }
 
 impl DatabaseHandler {
-    pub fn new() -> Result<DatabaseHandler, String> {
-        match Client::connect("host=localhost dbname=random_tables user=postgres password=postgres", NoTls) {
+    pub fn new(host: &str, dbname: &str, user: &str, password: &str) -> Result<DatabaseHandler, String> {
+        let connect_string = format!("host={} dbname={} user={} password={}", host, dbname, user, password);
+        match Client::connect(connect_string.as_str(), NoTls) {
             Ok(connection) => {
                 Ok(DatabaseHandler {
                     connection
