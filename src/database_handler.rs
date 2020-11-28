@@ -21,24 +21,33 @@ impl DatabaseHandler {
 
     pub fn create_account(&mut self, account: &account::Account) -> Result<(), String> {
         // TODO hash password before sending to database
-        match self.connection.execute("INSERT INTO account (username, password_hash) VALUES ($1, $2)", &[&account.name, &account.password]) {
+        let query_string = format!("INSERT INTO {} ({}, {}) VALUES ($1, $2)", account::ACCOUNT_TABLE_NAME, account::COLUMN_ACCOUNT_NAME, account::COLUMN_ACCOUNT_PASSWORD);
+        match self.connection.execute(query_string.as_str(), &[&account.name, &account.password]) {
             Ok(_) => Ok(()),
             Err(e) => return Err(format!("Failed to create user with error: {}", e)),
         }
     }
 
     pub fn find_account_by_id(&mut self, id: &i32) -> Option<account::Account> {
-        match self.connection.query_one("SELECT * FROM account WHERE account_id = $1", &[id]) {
+        let query_string = format!("SELECT * FROM {} WHERE {} = $1", account::ACCOUNT_TABLE_NAME, account::COLUMN_ACCOUNT_ID);
+        match self.connection.query_one(query_string.as_str(), &[id]) {
             Ok(row) => match DatabaseHandler::row_to_account(&row) {
                 Ok(account) => Some(account),
-                Err(_) => None,
+                Err(error) => {
+                    println!("Failed to find account by id with error: {}", error);
+                    None
+                },
             },
-            Err(_) => None,
+            Err(error) => {
+                println!("Failed to find account by id with error: {}", error);
+                None
+            },
         }
     }
 
     pub fn find_account_by_name(&mut self, name: &String) -> Option<account::Account> {
-        match self.connection.query_one("SELECT * FROM account WHERE username = $1", &[name]) {
+        let query_string = format!("SELECT * FROM {} WHERE {} = $1", account::ACCOUNT_TABLE_NAME, account::COLUMN_ACCOUNT_NAME);
+        match self.connection.query_one(query_string.as_str(), &[name]) {
             Ok(row) => match DatabaseHandler::row_to_account(&row) {
                 Ok(account) => Some(account),
                 Err(_) => None,
@@ -48,12 +57,14 @@ impl DatabaseHandler {
     }
 
     pub fn update_account(&mut self, account: &account::Account) -> Result<account::Account, PgError> {
-        let row = self.connection.query_one("UPDATE account SET username = $1, password_hash = $2 WHERE account_id = $3 RETURNING *", &[&account.name, &account.password, &account.id])?;
+        let query_string = format!("UPDATE {} SET {} = $1, {} = $2 WHERE {} = $3 RETURNING *", account::ACCOUNT_TABLE_NAME, account::COLUMN_ACCOUNT_NAME, account::COLUMN_ACCOUNT_PASSWORD, account::COLUMN_ACCOUNT_ID);
+        let row = self.connection.query_one(query_string.as_str(), &[&account.name, &account.password, &account.id])?;
         DatabaseHandler::row_to_account(&row)
     }
 
     pub fn delete_account(&mut self, id: &i32) -> Result<account::Account, PgError> {
-        let row = self.connection.query_one("DELETE FROM account WHERE account_id = $1 RETURNING *", &[id])?;
+        let query_string = format!("DELETE FROM {} WHERE {} = $1 RETURNING *", account::ACCOUNT_TABLE_NAME, account::COLUMN_ACCOUNT_ID);
+        let row = self.connection.query_one(query_string.as_str(), &[id])?;
         DatabaseHandler::row_to_account(&row)
     }
     
@@ -70,14 +81,16 @@ impl DatabaseHandler {
     }
 
     pub fn create_table(&mut self, table: &random_table::Table) -> Result<(), String> {
-        match self.connection.query("INSERT INTO random_table (created_by, name) VALUES ($1, $2)", &[&table.created_by, &table.name]) {
+        let query_string = format!("INSERT INTO {} ({}, {}) VALUES ($1, $2)", random_table::TABLE_TABLE_NAME, random_table::COLUMN_TABLE_CREATED_BY, random_table::COLUMN_TABLE_NAME);
+        match self.connection.query(query_string.as_str(), &[&table.created_by, &table.name]) {
             Ok(_) => Ok(()),
             Err(error) => Err(format!("Failed to create random_table entry with error: {}", error)),
         }
     }
 
     pub fn find_table_by_id(&mut self, id: &i32) -> Option<random_table::Table> {
-        match self.connection.query_one("SELECT * FROM random_table WHERE id = $1", &[id]) {
+        let query_string = format!("SELECT * FROM {} WHERE {} = $1", random_table::TABLE_TABLE_NAME, random_table::COLUMN_TABLE_ID);
+        match self.connection.query_one(query_string.as_str(), &[id]) {
             Ok(row) => match DatabaseHandler::row_to_table(&row) {
                 Ok(table) => Some(table),
                 Err(_) => None,
@@ -89,7 +102,8 @@ impl DatabaseHandler {
     pub fn list_tables_by_creator_id(&mut self, creator_id: &i32) -> Vec<random_table::Table> {
         let mut results = Vec::new();
 
-        match self.connection.query("SELECT * FROM random_table WHERE created_by = $1", &[creator_id]) {
+        let query_string = format!("SELECT * FROM {} WHERE {} = $1", random_table::TABLE_TABLE_NAME, random_table::COLUMN_TABLE_CREATED_BY);
+        match self.connection.query(query_string.as_str(), &[creator_id]) {
             Ok(rows) => {
                 for row in rows {
                     if let Ok(table) = DatabaseHandler::row_to_table(&row) {
@@ -108,7 +122,8 @@ impl DatabaseHandler {
     }
 
     pub fn find_table_elements_by_table_id(&mut self, table_id: &i32) -> Option<Vec<String>> {
-        if let Ok(rows) = self.connection.query("SELECT * FROM random_table_element WHERE table_id = $1", &[table_id]) {
+        let query_string = format!("SELECT * FROM {} WHERE {} = $1", random_table::TABLE_ELEMENT_TABLE_NAME, random_table::COLUMN_TABLE_ELEMENT_TABLE_ID);
+        if let Ok(rows) = self.connection.query(query_string.as_str(), &[table_id]) {
             if let Ok(elements_option) = DatabaseHandler::row_vec_to_element_vec(&rows) {
                 return elements_option;
             }
@@ -153,13 +168,15 @@ impl DatabaseHandler {
     }
 
     fn delete_table_transaction(transaction: &mut postgres::Transaction, table: &random_table::Table) -> Result<random_table::Table, PgError> {
-        let row = transaction.query_one("DELETE FROM random_table WHERE id = $1 AND created_by = $2 RETURNING *", &[&table.id, &table.created_by])?;
+        let query_string = format!("DELETE FROM {} WHERE {} = $1 AND {} = $2 RETURNING *", random_table::TABLE_TABLE_NAME, random_table::COLUMN_TABLE_ID, random_table::COLUMN_TABLE_CREATED_BY);
+        let row = transaction.query_one(query_string.as_str(), &[&table.id, &table.created_by])?;
         DatabaseHandler::row_to_table(&row)
     }
 
     pub fn create_table_elements(&mut self, table: &random_table::Table) -> Result<(), String> {
         if let Some(ref elements) = table.elements {
-            let statement = self.connection.prepare("INSERT INTO random_table_element (table_id, index, text) VALUES ($1, $2, $3)")
+            let query_string = format!("INSERT INTO {} ({}, {}, {}) VALUES ($1, $2, $3)", random_table::TABLE_ELEMENT_TABLE_NAME, random_table::COLUMN_TABLE_ELEMENT_TABLE_ID, random_table::COLUMN_TABLE_ELEMENT_INDEX, random_table::COLUMN_TABLE_ELEMENT_TEXT);
+            let statement = self.connection.prepare(query_string.as_str())
                 .map_err(|error| format!("Failed to create statment with error: {}", error))?;
 
             for (index, value) in elements.iter().enumerate() {
@@ -190,7 +207,8 @@ impl DatabaseHandler {
     }
 
     fn delete_table_elements_transaction(transaction: &mut postgres::Transaction, table: &random_table::Table) -> Result<Option<Vec<String>>, PgError> {
-        let rows = transaction.query("DELETE FROM random_table_element WHERE table_id = $1 RETURNING *", &[&table.id])?;
+        let query_string = format!("DELETE FROM {} WHERE {} = $1 RETURNING *", random_table::TABLE_ELEMENT_TABLE_NAME, random_table::COLUMN_TABLE_ELEMENT_TABLE_ID);
+        let rows = transaction.query(query_string.as_str(), &[&table.id])?;
         DatabaseHandler::row_vec_to_element_vec(&rows)
     }
 
