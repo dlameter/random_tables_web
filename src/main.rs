@@ -1,6 +1,8 @@
 use std::collections::HashMap;
 use std::sync::{Arc, Mutex};
 
+use config;
+
 use warp::{Filter, filters::BoxedFilter, http::Uri};
 
 use random_tables_web::data;
@@ -14,7 +16,15 @@ async fn main() {
     let templator = Templator::new("./_layout/".to_string(), "./_includes/".to_string());
     let templator = Arc::new(Mutex::new(templator));
 
-    let handler = match DatabaseHandler::new("localhost", "random_tables", "postgres", "postgres") {
+    let mut settings = config::Config::default();
+    settings.merge(config::File::with_name("config.json")).unwrap();
+    
+    let host = settings.get_str("host").unwrap();
+    let dbname = settings.get_str("dbname").unwrap();
+    let user = settings.get_str("user").unwrap();
+    let password = settings.get_str("password").unwrap();
+
+    let handler = match DatabaseHandler::new(host.as_str(), dbname.as_str(), user.as_str(), password.as_str()) {
         Ok(c) => c,
         Err(e) => panic!(format!(
             "Failed to create database handler with error: {}",
