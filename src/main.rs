@@ -19,7 +19,7 @@ async fn main() {
     let index = warp::get()
         .and(warp::path("index.html"))
         .map(|| PageTemplate::default())
-        .map(move |pt: PageTemplate| pt.render_with(templator_clone.clone()));
+        .map(move |pt: PageTemplate| warp::reply::html(pt.render_with(templator_clone.clone())));
 
     let index_redirect =
         warp::get().and(warp::path::end().map(|| warp::redirect(Uri::from_static("/index.html"))));
