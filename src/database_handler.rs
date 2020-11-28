@@ -3,13 +3,31 @@ use postgres::error::Error as PgError;
 
 use crate::data::{account, random_table};
 
+pub struct DatabaseConfig {
+    host: String,
+    dbname: String,
+    user: String,
+    password: String,
+}
+
+impl DatabaseConfig {
+    pub fn new(host: String, dbname: String, user: String, password: String) -> Self {
+        Self {
+            host,
+            dbname,
+            user,
+            password,
+        }
+    }
+}
+
 pub struct DatabaseHandler {
     connection: postgres::Client
 }
 
 impl DatabaseHandler {
-    pub fn new(host: &str, dbname: &str, user: &str, password: &str) -> Result<DatabaseHandler, String> {
-        let connect_string = format!("host={} dbname={} user={} password={}", host, dbname, user, password);
+    pub fn new(database_config: &DatabaseConfig) -> Result<DatabaseHandler, String> {
+        let connect_string = format!("host={} dbname={} user={} password={}", database_config.host.as_str(), database_config.dbname.as_str(), database_config.user.as_str(), database_config.password.as_str());
         match Client::connect(connect_string.as_str(), NoTls) {
             Ok(connection) => {
                 Ok(DatabaseHandler {

@@ -6,7 +6,7 @@ use config;
 use warp::{Filter, filters::BoxedFilter, http::Uri};
 
 use random_tables_web::data;
-use random_tables_web::database_handler::DatabaseHandler;
+use random_tables_web::database_handler::{DatabaseConfig, DatabaseHandler};
 use random_tables_web::templating::{page_template::PageTemplate, templator::Templator};
 
 type SharedDatabaseHandler = Arc<Mutex<DatabaseHandler>>;
@@ -19,12 +19,14 @@ async fn main() {
     let mut settings = config::Config::default();
     settings.merge(config::File::with_name("config.json")).unwrap();
     
-    let host = settings.get_str("host").unwrap();
-    let dbname = settings.get_str("dbname").unwrap();
-    let user = settings.get_str("user").unwrap();
-    let password = settings.get_str("password").unwrap();
+    let dbconfig = DatabaseConfig::new(
+        settings.get_str("host").unwrap(),
+        settings.get_str("dbname").unwrap(),
+        settings.get_str("user").unwrap(),
+        settings.get_str("password").unwrap()
+    );
 
-    let handler = match DatabaseHandler::new(host.as_str(), dbname.as_str(), user.as_str(), password.as_str()) {
+    let handler = match DatabaseHandler::new(&dbconfig) {
         Ok(c) => c,
         Err(e) => panic!(format!(
             "Failed to create database handler with error: {}",
