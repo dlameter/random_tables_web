@@ -12,8 +12,16 @@ type SharedDatabaseHandler = Arc<Mutex<DatabaseHandler>>;
 #[tokio::main]
 async fn main() {
     let templator = Templator::new("./_layout/".to_string(), "./_includes/".to_string());
-
     let templator = Arc::new(Mutex::new(templator));
+
+    let handler = match DatabaseHandler::new("localhost", "random_tables", "postgres", "postgres") {
+        Ok(c) => c,
+        Err(e) => panic!(format!(
+            "Failed to create database handler with error: {}",
+            e
+        )),
+    };
+    let handler = Arc::new(Mutex::new(handler));
 
     let templator_clone = templator.clone();
     let index = warp::get()
@@ -25,15 +33,6 @@ async fn main() {
         warp::get().and(warp::path::end().map(|| warp::redirect(Uri::from_static("/index.html"))));
 
     let static_files = warp::get().and(warp::path("static").and(warp::fs::dir("static")));
-
-    let handler = match DatabaseHandler::new("localhost", "random_tables", "postgres", "postgres") {
-        Ok(c) => c,
-        Err(e) => panic!(format!(
-            "Failed to create database handler with error: {}",
-            e
-        )),
-    };
-    let handler = Arc::new(Mutex::new(handler));
 
     let accounts_endpoint = build_account_endpoint(&handler, templator.clone());
 
