@@ -12,3 +12,4 @@ tokio = { version = "0.2", features = ["full"] }
 warp = "0.2"
 liquid = "0.20"
 postgres = "0.18.1"
+config = "0.10.1"
