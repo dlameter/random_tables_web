@@ -53,7 +53,8 @@ fn build_account_endpoint(
                 .or(build_tables_by_account_id_filter(handler))
                 .or(build_delete_account_filter(handler))
                 .or(build_create_account_filter(handler))
-                .or(build_update_account_filter(handler)),
+                .or(build_update_account_filter(handler))
+                .or(build_edit_account_filter(handler, templator.clone()))
         )
         .boxed()
 }
@@ -135,7 +136,7 @@ fn build_update_account_filter(
         .and(warp::path("update"))
         .and(warp::path::end())
         .and(warp::body::content_length_limit(1024 * 32))
-        .and(warp::body::json())
+        .and(warp::body::form())
         .map(move |json_map: HashMap<String, String>| {
             if let (Some(id), Some(name), Some(password)) = (
                 json_map.get("id"),
@@ -196,5 +197,27 @@ fn build_tables_by_account_id_filter(
                 .list_tables_by_creator_id(&account_id);
             format!("{:?}", tables)
         })
+        .boxed()
+}
+
+fn build_edit_account_filter(
+handler: &SharedDatabaseHandler,
+templator: Arc<Mutex<Templator>>,
+) -> BoxedFilter<(impl warp::Reply,)>{
+    let handler_clone = Arc::clone(handler);
+    warp::get()
+        .and(warp::path!("edit" / i32))
+        .and(warp::path::end())
+        .map(
+            move |id| {
+                let string_response = match handler_clone.lock().unwrap().find_account_by_id(&id) {
+                    Some(account) => {
+                        let pt = PageTemplate::edit_account(&account.name, account.id);
+                        pt.render_with(templator.clone())
+                    }
+                    None => format!("Cannot edit non-existance account with id {}", id),
+                };
+                warp::reply::html(string_response)
+            })
         .boxed()
 }
