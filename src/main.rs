@@ -48,7 +48,9 @@ async fn main() {
 
     let accounts_endpoint = build_account_endpoint(&handler, templator.clone());
 
-    let routes = accounts_endpoint.or(index.or(index_redirect).or(static_files));
+    let cors = warp::cors().allow_origin("http://localhost:3000");
+
+    let routes = accounts_endpoint.or(index.or(index_redirect).or(static_files)).with(cors);
 
     warp::serve(routes).run(([127, 0, 0, 1], 3030)).await;
 }
@@ -79,16 +81,9 @@ fn build_account_by_id_filter(
         .and(warp::path!("id" / i32))
         .and(warp::path::end())
         .map(
-            move |id| {
-                let string_response = match handler_clone.lock().unwrap().find_account_by_id(&id) {
-                        Some(account) => {
-                            let pt = PageTemplate::new_account(&account.name, account.id);
-                            pt.render_with(templator.clone())
-                        },
-                        None => format!("Could not find user with id {}", id),
-                    };
-
-                warp::reply::html(string_response)
+            move |id| match handler_clone.lock().unwrap().find_account_by_id(&id) {
+                Some(account) => format!("{{ \"id\": {}, \"name\": \"{}\", \"password\": \"{}\" }}", account.id, account.name, account.password),
+                None => "{}".to_string(),
             },
         )
         .boxed()
