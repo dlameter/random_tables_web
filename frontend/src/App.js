@@ -1,5 +1,6 @@
 import logo from './logo.svg';
 import './App.css';
+import Account from './Account.js';
 
 function App() {
   return (
@@ -15,8 +16,9 @@ function App() {
           target="_blank"
           rel="noopener noreferrer"
         >
-          Learn React
+          React
         </a>
+        <Account accountId={1} />
       </header>
     </div>
   );
