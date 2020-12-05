@@ -93,12 +93,10 @@ impl DatabaseHandler {
         })
     }
 
-    pub fn create_table(&mut self, table: &random_table::Table) -> Result<(), String> {
+    pub fn create_table(&mut self, table: &random_table::Table) -> Result<random_table::Table, PgError> {
         let query_string = format!("INSERT INTO {} ({}, {}) VALUES ($1, $2)", random_table::TABLE_TABLE_NAME, random_table::COLUMN_TABLE_CREATED_BY, random_table::COLUMN_TABLE_NAME);
-        match self.connection.query(query_string.as_str(), &[&table.created_by, &table.name]) {
-            Ok(_) => Ok(()),
-            Err(error) => Err(format!("Failed to create random_table entry with error: {}", error)),
-        }
+        let row = self.connection.query_one(query_string.as_str(), &[&table.created_by, &table.name])?;
+        DatabaseHandler::row_to_table(&row)
     }
 
     pub fn find_table_by_id(&mut self, id: &i32) -> Option<random_table::Table> {
