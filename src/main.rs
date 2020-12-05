@@ -159,13 +159,19 @@ fn build_delete_account_filter(
     handler: &SharedDatabaseHandler,
 ) -> BoxedFilter<(impl warp::Reply,)> {
     let handler_clone = Arc::clone(handler);
-    warp::get()
-        .and(warp::path!("id" / i32 / "delete"))
+    warp::delete()
+        .and(warp::path!("id" / i32))
         .and(warp::path::end())
         .map(
             move |id| match handler_clone.lock().unwrap().delete_account(&id) {
-                Ok(account) => format!("{:?}", account),
-                Err(error) => format!("Failed to delete account id {} with error: {}", id, error),
+                Ok(account) => warp::reply::with_status(
+                    warp::reply::json(&account), 
+                    warp::http::StatusCode::OK
+                ).into_response(),
+                Err(error) => warp::reply::with_status(
+                    format!("Failed to delete account id {} with error: {}", id, error),
+                    warp::http::StatusCode::INTERNAL_SERVER_ERROR
+                ).into_response(),
             },
         )
         .boxed()
