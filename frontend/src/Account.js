@@ -1,10 +1,11 @@
 import React from "react";
 import axios from "axios";
+import { useParams} from 'react-router-dom';
 
 import TableList from "./TableList";
 import BackendURLBuilder from "./BackendURLBuilder";
 
-class Account extends React.Component {
+export const Account = class Account extends React.Component {
     constructor(props) {
         super(props);
         this.state = {
@@ -55,4 +56,7 @@ class Account extends React.Component {
     }
 }
 
-export default Account;
+export const AccountPage = function AccountPage() {
+    let { accountId } = useParams();
+    return (<Account accountId={accountId} />);
+};
