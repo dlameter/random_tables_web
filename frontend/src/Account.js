@@ -13,8 +13,6 @@ export const Account = class Account extends React.Component {
             accountId: props.accountId,
             account: null,
             accountLoaded: false,
-            tables: [],
-            tablesLoaded: false,
         };
     }
     
@@ -26,17 +24,24 @@ export const Account = class Account extends React.Component {
                     let account = res.data;
                     this.setState({ account, accountLoaded: true})
                 }, 
-                (error) => this.setState({error, accountLoaded: true})
+                (error) => {
+                    this.setState({error, accountLoaded: true})
+                }
             );
     }
 
     render() {
         if (this.state.error) {
-            return (
-                <div>
-                    <h1>Error: {this.state.error.message}</h1>
-                </div>
-            );
+            if (this.state.error.response.status === 404) {
+                return (<div><h1>Account not found</h1></div>);
+            }
+            else {
+                return (
+                    <div>
+                        <h1>Error: {this.state.error.message}</h1>
+                    </div>
+                );
+            }
         }
         else if (!this.state.accountLoaded) {
             return (
