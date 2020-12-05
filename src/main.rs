@@ -98,7 +98,7 @@ fn build_create_account_filter(
         .and(warp::body::json())
         .map(move |account: data::account::Account| {
             match handler_clone.lock().unwrap().create_account(&account) {
-                Ok(_) => return "Account created".to_string(),
+                Ok(created_account) => return format!("Account created with id {}", created_account.id.unwrap()),
                 Err(error) => return format!("Failed to create account with error: {}", error),
             }
         })
