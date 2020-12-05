@@ -12,4 +12,10 @@ PUT /account/id/{number} - update account with given id
 PUT /account/name/{string} - update account with given name
 DELETE /account/id/{number} - delete account with given id
 DELETE /account/name/{string} - delete account with given name
+
+// Table api
+POST /table - create table
+GET /table/{number} - read table with given id
+PUT /table/{number} - update table with given id
+DELETE /table/{number} - delete table with given id
 ```
