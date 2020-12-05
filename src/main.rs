@@ -2,8 +2,7 @@ use std::collections::HashMap;
 use std::sync::{Arc, Mutex};
 
 use config;
-
-use warp::{Filter, filters::BoxedFilter, http::Uri};
+use warp::{Filter, filters::BoxedFilter};
 
 use random_tables_web::data;
 use random_tables_web::database_handler::{DatabaseConfig, DatabaseHandler};
