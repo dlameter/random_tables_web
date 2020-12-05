@@ -103,14 +103,19 @@ fn build_create_account_filter(
 ) -> BoxedFilter<(impl warp::Reply,)> {
     let handler_clone = Arc::clone(handler);
     warp::post()
-        .and(warp::path("create"))
         .and(warp::path::end())
         .and(warp::body::content_length_limit(1024 * 32))
         .and(warp::body::json())
         .map(move |account: data::account::Account| {
             match handler_clone.lock().unwrap().create_account(&account) {
-                Ok(created_account) => return format!("Account created with id {}", created_account.id.unwrap()),
-                Err(error) => return format!("Failed to create account with error: {}", error),
+                Ok(created_account) => warp::reply::with_status(
+                    format!("Account created with id {}", created_account.id.unwrap()),
+                    warp::http::StatusCode::CREATED
+                ),
+                Err(error) => warp::reply::with_status(
+                    format!("Failed to create account with error: {}", error),
+                    warp::http::StatusCode::INTERNAL_SERVER_ERROR
+                ),
             }
         })
         .boxed()
