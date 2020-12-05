@@ -38,16 +38,11 @@ impl DatabaseHandler {
         }
     }
 
-    pub fn create_account(&mut self, account: &account::Account) -> Result<account::Account, String> {
+    pub fn create_account(&mut self, account: &account::Account) -> Result<account::Account, PgError> {
         // TODO hash password before sending to database
         let query_string = format!("INSERT INTO {} ({}, {}) VALUES ($1, $2) RETURNING *", account::ACCOUNT_TABLE_NAME, account::COLUMN_ACCOUNT_NAME, account::COLUMN_ACCOUNT_PASSWORD);
-        match self.connection.query_one(query_string.as_str(), &[&account.name, &account.password]) {
-            Ok(row) => match DatabaseHandler::row_to_account(&row) {
-                Ok(account) => Ok(account),
-                Err(error) => Err(format!("Failed to create user with error: {}", error))
-            },
-            Err(error) => return Err(format!("Failed to create user with error: {}", error)),
-        }
+        let row = self.connection.query_one(query_string.as_str(), &[&account.name, &account.password])?;
+        DatabaseHandler::row_to_account(&row)
     }
 
     pub fn find_account_by_id(&mut self, id: &i32) -> Option<account::Account> {
