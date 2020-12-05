@@ -3,7 +3,6 @@ use std::sync::{Arc, Mutex};
 
 use config;
 use warp::{Filter, filters::BoxedFilter, Reply};
-use serde_json;
 
 use random_tables_web::data;
 use random_tables_web::database_handler::{DatabaseConfig, DatabaseHandler};
@@ -64,8 +63,14 @@ fn build_account_by_id_filter(
         .and(warp::path::end())
         .map(
             move |id| match handler_clone.lock().unwrap().find_account_by_id(&id) {
-                Some(account) => warp::reply::with_status(warp::reply::json(&account), warp::http::StatusCode::OK).into_response(),
-                None => warp::reply::with_status(warp::reply(), warp::http::StatusCode::NOT_FOUND).into_response(),
+                Some(account) => warp::reply::with_status(
+                    warp::reply::json(&account), 
+                    warp::http::StatusCode::OK
+                ).into_response(),
+                None => warp::reply::with_status(
+                    warp::reply(), 
+                    warp::http::StatusCode::NOT_FOUND
+                ).into_response(),
             },
         )
         .boxed()
