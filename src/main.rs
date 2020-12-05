@@ -188,25 +188,3 @@ fn build_tables_by_account_id_filter(
         })
         .boxed()
 }
-
-fn build_edit_account_filter(
-handler: &SharedDatabaseHandler,
-templator: Arc<Mutex<Templator>>,
-) -> BoxedFilter<(impl warp::Reply,)>{
-    let handler_clone = Arc::clone(handler);
-    warp::get()
-        .and(warp::path!("edit" / i32))
-        .and(warp::path::end())
-        .map(
-            move |id| {
-                let string_response = match handler_clone.lock().unwrap().find_account_by_id(&id) {
-                    Some(account) => {
-                        let pt = PageTemplate::edit_account(&account.name, account.id);
-                        pt.render_with(templator.clone())
-                    }
-                    None => format!("Cannot edit non-existance account with id {}", id),
-                };
-                warp::reply::html(string_response)
-            })
-        .boxed()
-}
