@@ -125,37 +125,32 @@ fn build_update_account_filter(
     handler: &SharedDatabaseHandler,
 ) -> BoxedFilter<(impl warp::Reply,)> {
     let handler_clone = Arc::clone(handler);
-    warp::post()
-        .and(warp::path("update"))
+    warp::put()
+        .and(warp::path!("id" / i32))
         .and(warp::path::end())
         .and(warp::body::content_length_limit(1024 * 32))
         .and(warp::body::form())
-        .map(move |json_map: HashMap<String, String>| {
-            if let (Some(id), Some(name), Some(password)) = (
-                json_map.get("id"),
-                json_map.get("name"),
-                json_map.get("password"),
-            ) {
-                if let Ok(id) = i32::from_str_radix(id, 10) {
-                    let updated_account = data::account::Account {
-                        id: Some(id),
-                        name: name.clone(),
-                        password: password.clone(),
-                    };
+        .map(move |id, account: data::account::Account| {
+            let updated_account = data::account::Account {
+                id: Some(id),
+                name: account.name.clone(),
+                password: account.password.clone(),
+            };
 
-                    match handler_clone
-                        .lock()
-                        .unwrap()
-                        .update_account(&updated_account)
-                    {
-                        Ok(account) => return format!("Updated account to {:?}", account),
-                        Err(error) => {
-                            return format!("Failed to update account with error: {}", error)
-                        }
-                    }
-                }
+            match handler_clone
+                .lock()
+                .unwrap()
+                .update_account(&updated_account)
+            {
+                Ok(account) => warp::reply::with_status(
+                    format!("Updated account with id {}", account.id.unwrap()),
+                    warp::http::StatusCode::OK
+                ),
+                Err(error) => warp::reply::with_status(
+                    format!("Failed to update account with error: {}", error),
+                    warp::http::StatusCode::INTERNAL_SERVER_ERROR
+                )
             }
-            format!("Failed to update account, name, password, not specified or id not an int.")
         })
         .boxed()
 }
