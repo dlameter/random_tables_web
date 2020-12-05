@@ -2,7 +2,7 @@ use std::collections::HashMap;
 use std::sync::{Arc, Mutex};
 
 use config;
-use warp::{Filter, filters::BoxedFilter};
+use warp::{Filter, filters::BoxedFilter, Reply};
 use serde_json;
 
 use random_tables_web::data;
@@ -64,8 +64,8 @@ fn build_account_by_id_filter(
         .and(warp::path::end())
         .map(
             move |id| match handler_clone.lock().unwrap().find_account_by_id(&id) {
-                Some(account) => serde_json::to_string(&account).unwrap(),
-                None => "{}".to_string(),
+                Some(account) => warp::reply::with_status(warp::reply::json(&account), warp::http::StatusCode::CREATED).into_response(),
+                None => warp::reply::with_status(warp::reply(), warp::http::StatusCode::NOT_FOUND).into_response(),
             },
         )
         .boxed()
