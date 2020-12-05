@@ -3,6 +3,7 @@ use std::sync::{Arc, Mutex};
 
 use config;
 use warp::{Filter, filters::BoxedFilter};
+use serde_json;
 
 use random_tables_web::data;
 use random_tables_web::database_handler::{DatabaseConfig, DatabaseHandler};
@@ -63,7 +64,7 @@ fn build_account_by_id_filter(
         .and(warp::path::end())
         .map(
             move |id| match handler_clone.lock().unwrap().find_account_by_id(&id) {
-                Some(account) => format!("{{ \"id\": {}, \"name\": \"{}\", \"password\": \"{}\" }}", account.id, account.name, account.password),
+                Some(account) => serde_json::to_string(&account).unwrap(),
                 None => "{}".to_string(),
             },
         )
