@@ -85,8 +85,14 @@ fn build_account_by_name_filter(
         .and(warp::path::end())
         .map(
             move |name| match handler_clone.lock().unwrap().find_account_by_name(&name) {
-                Some(account) => format!("{:?}", account),
-                None => format!("Could not find user with name {}", name),
+                Some(account) => warp::reply::with_status(
+                    warp::reply::json(&account), 
+                    warp::http::StatusCode::OK
+                ).into_response(),
+                None => warp::reply::with_status(
+                    warp::reply(), 
+                    warp::http::StatusCode::NOT_FOUND
+                ).into_response(),
             },
         )
         .boxed()
