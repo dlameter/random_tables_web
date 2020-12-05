@@ -13,9 +13,6 @@ type SharedDatabaseHandler = Arc<Mutex<DatabaseHandler>>;
 
 #[tokio::main]
 async fn main() {
-    let templator = Templator::new("./_layout/".to_string(), "./_includes/".to_string());
-    let templator = Arc::new(Mutex::new(templator));
-
     let mut settings = config::Config::default();
     settings.merge(config::File::with_name("config.json")).unwrap();
     
@@ -35,46 +32,32 @@ async fn main() {
     };
     let handler = Arc::new(Mutex::new(handler));
 
-    let templator_clone = templator.clone();
-    let index = warp::get()
-        .and(warp::path("index.html"))
-        .map(|| PageTemplate::default())
-        .map(move |pt: PageTemplate| warp::reply::html(pt.render_with(templator_clone.clone())));
-
-    let index_redirect =
-        warp::get().and(warp::path::end().map(|| warp::redirect(Uri::from_static("/index.html"))));
-
-    let static_files = warp::get().and(warp::path("static").and(warp::fs::dir("static")));
-
-    let accounts_endpoint = build_account_endpoint(&handler, templator.clone());
+    let accounts_endpoint = build_account_endpoint(&handler);
 
     let cors = warp::cors().allow_origin("http://localhost:3000");
 
-    let routes = accounts_endpoint.or(index.or(index_redirect).or(static_files)).with(cors);
+    let routes = accounts_endpoint.with(cors);
 
     warp::serve(routes).run(([127, 0, 0, 1], 3030)).await;
 }
 
 fn build_account_endpoint(
     handler: &SharedDatabaseHandler,
-    templator: Arc<Mutex<Templator>>,
 ) -> BoxedFilter<(impl warp::Reply,)> {
     warp::path("account")
         .and(
-            build_account_by_id_filter(handler, templator.clone())
+            build_account_by_id_filter(handler)
                 .or(build_account_by_name_filter(handler))
                 .or(build_tables_by_account_id_filter(handler))
                 .or(build_delete_account_filter(handler))
                 .or(build_create_account_filter(handler))
                 .or(build_update_account_filter(handler))
-                .or(build_edit_account_filter(handler, templator.clone()))
         )
         .boxed()
 }
 
 fn build_account_by_id_filter(
     handler: &SharedDatabaseHandler,
-    templator: Arc<Mutex<Templator>>,
 ) -> BoxedFilter<(impl warp::Reply,)> {
     let handler_clone = Arc::clone(handler);
     warp::get()
