@@ -7,7 +7,6 @@ use warp::{Filter, filters::BoxedFilter, http::Uri};
 
 use random_tables_web::data;
 use random_tables_web::database_handler::{DatabaseConfig, DatabaseHandler};
-use random_tables_web::templating::{page_template::PageTemplate, templator::Templator};
 
 type SharedDatabaseHandler = Arc<Mutex<DatabaseHandler>>;
 
