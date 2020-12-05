@@ -1,9 +1,9 @@
-import React from "react";
-import axios from "axios";
+import React from 'react';
+import axios from 'axios';
 import { useParams} from 'react-router-dom';
 
-import TableList from "./TableList";
-import BackendURLBuilder from "./BackendURLBuilder";
+import TableList from './TableList';
+import BackendURLBuilder from './BackendURLBuilder';
 
 export const Account = class Account extends React.Component {
     constructor(props) {
