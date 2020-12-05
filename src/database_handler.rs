@@ -93,7 +93,7 @@ impl DatabaseHandler {
         let password: String = row.try_get(account::COLUMN_ACCOUNT_PASSWORD)?;
 
         Ok(account::Account {
-            id,
+            id: Some(id),
             name,
             password,
         })

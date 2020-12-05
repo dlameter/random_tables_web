@@ -7,7 +7,7 @@ pub const COLUMN_ACCOUNT_PASSWORD: &str = "password_hash";
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct Account {
-    pub id: i32,
+    pub id: Option<i32>,
     pub name: String,
     pub password: String,
 }
