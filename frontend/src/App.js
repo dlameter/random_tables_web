@@ -13,7 +13,7 @@ function App() {
     return (
         <Router>
             <div>
-                <header>
+                <nav>
                     <ul>
                         <li>
                             <Link to="/">Home</Link>
@@ -22,7 +22,7 @@ function App() {
                             <Link to="/account/1">First Account</Link>
                         </li>
                     </ul>
-                </header>
+                </nav>
                 <Switch>
                     <Route exact path="/">
                         <Home />
