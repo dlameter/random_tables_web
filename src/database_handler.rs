@@ -26,16 +26,12 @@ pub struct DatabaseHandler {
 }
 
 impl DatabaseHandler {
-    pub fn new(database_config: &DatabaseConfig) -> Result<DatabaseHandler, String> {
+    pub fn new(database_config: &DatabaseConfig) -> Result<DatabaseHandler, PgError> {
         let connect_string = format!("host={} dbname={} user={} password={}", database_config.host.as_str(), database_config.dbname.as_str(), database_config.user.as_str(), database_config.password.as_str());
-        match Client::connect(connect_string.as_str(), NoTls) {
-            Ok(connection) => {
-                Ok(DatabaseHandler {
-                    connection
-                })
-            },
-            Err(e) => Err(format!("Failed to connect to database with error: {}", e)),
-        }
+        let connection = Client::connect(connect_string.as_str(), NoTls)?;
+        Ok(DatabaseHandler {
+            connection
+        })
     }
 
     pub fn create_account(&mut self, account: &account::Account) -> Result<account::Account, PgError> {
