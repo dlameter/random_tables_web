@@ -1,3 +1,5 @@
+use serde::{Deserialize, Serialize};
+
 pub const TABLE_TABLE_NAME: &str = "random_table";
 pub const COLUMN_TABLE_ID: &str = "id";
 pub const COLUMN_TABLE_NAME: &str = "name";
@@ -8,7 +10,7 @@ pub const COLUMN_TABLE_ELEMENT_INDEX: &str = "index";
 pub const COLUMN_TABLE_ELEMENT_TABLE_ID: &str = "table_id";
 pub const COLUMN_TABLE_ELEMENT_TEXT: &str = "text";
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct Table {
     pub id: i32,
     pub created_by: i32,
