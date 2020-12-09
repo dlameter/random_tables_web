@@ -56,7 +56,7 @@ function App() {
                     </li>
                 </ul>
             </nav>
-            <Container maxWidth="sm">
+            <Container maxWidth="md">
                 <Switch>
                     <Route exact path="/">
                         <Home />
