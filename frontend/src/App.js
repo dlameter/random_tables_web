@@ -12,6 +12,7 @@ import Typography from '@material-ui/core/Typography';
 import Button from '@material-ui/core/Button';
 import IconButton from '@material-ui/core/IconButton';
 import MenuIcon from '@material-ui/icons/Menu';
+import Container from '@material-ui/core/Container';
 
 import Home from './Home.js';
 import { AccountPage } from './Account.js';
@@ -55,14 +56,16 @@ function App() {
                     </li>
                 </ul>
             </nav>
-            <Switch>
-                <Route exact path="/">
-                    <Home />
-                </Route>
-                <Route path="/account/:accountId">
-                    <AccountPage />
-                </Route>
-            </Switch>
+            <Container maxWidth="sm">
+                <Switch>
+                    <Route exact path="/">
+                        <Home />
+                    </Route>
+                    <Route path="/account/:accountId">
+                        <AccountPage />
+                    </Route>
+                </Switch>
+            </Container>
         </Router>
     );
 }
