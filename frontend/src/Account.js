@@ -54,7 +54,7 @@ export const Account = class Account extends React.Component {
             return (
                 <div>
                     <h1>{this.state.account.name}</h1>
-                    <TableList table={['list item', 'list item', 'list item']}/>
+                    <TableList tables={['list item', 'list item', 'list item']}/>
                 </div>
             );
         }
