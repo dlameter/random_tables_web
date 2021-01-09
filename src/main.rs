@@ -31,7 +31,9 @@ async fn main() {
 
     let accounts_endpoint = build_account_endpoint(&handler);
 
-    let cors = warp::cors().allow_origin("http://localhost:3000");
+    let cors = warp::cors().allow_origin("http://localhost:3000")
+        .allow_methods(vec!["GET", "POST"])
+        .allow_header("content-type");
 
     let routes = accounts_endpoint.with(cors);
 
