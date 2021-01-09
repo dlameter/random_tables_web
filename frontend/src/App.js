@@ -16,6 +16,7 @@ import Container from '@material-ui/core/Container';
 
 import Home from './Home.js';
 import { AccountPage } from './Account.js';
+import CreateAccount from './CreateAccount.js';
 
 const useStyles = makeStyles((theme) => ({
   root: {
@@ -63,6 +64,9 @@ function App() {
                     </Route>
                     <Route path="/account/:accountId">
                         <AccountPage />
+                    </Route>
+                    <Route path="/createaccount">
+                        <CreateAccount />
                     </Route>
                 </Switch>
             </Container>
