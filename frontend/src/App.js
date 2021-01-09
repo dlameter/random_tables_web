@@ -3,7 +3,6 @@ import {
     Switch,
     Route,
     Link,
-    useParams,
 } from 'react-router-dom';
 import { makeStyles } from '@material-ui/core/styles';
 import AppBar from '@material-ui/core/AppBar';
@@ -28,6 +27,9 @@ const useStyles = makeStyles((theme) => ({
   title: {
     flexGrow: 1,
   },
+  spaced: {
+    paddingTop: theme.spacing(4),
+  },
 }));
 
 function App() {
@@ -44,20 +46,11 @@ function App() {
                         Random Tables Web
                     </Typography>
                     <Button color="inherit" component={Link} to="/">Home</Button>
-                    <Button color="inherit" component={Link} to="/account/1">Account 1</Button>
+                    <Button color="inherit" component={Link} to="/createAccount">Sign up</Button>
                 </Toolbar>
             </AppBar>
-            <nav>
-                <ul>
-                    <li>
-                        <Link to="/">Home</Link>
-                    </li>
-                    <li>
-                        <Link to="/account/1">First Account</Link>
-                    </li>
-                </ul>
-            </nav>
-            <Container maxWidth="md">
+            <Toolbar></Toolbar>
+            <Container maxWidth="md" className={classes.spaced}>
                 <Switch>
                     <Route exact path="/">
                         <Home />
@@ -65,7 +58,7 @@ function App() {
                     <Route path="/account/:accountId">
                         <AccountPage />
                     </Route>
-                    <Route path="/createaccount">
+                    <Route path="/createAccount">
                         <CreateAccount />
                     </Route>
                 </Switch>
