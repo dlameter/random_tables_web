@@ -37,7 +37,7 @@ impl DatabaseHandler {
     pub fn create_account(&mut self, account: &account::Account) -> Result<account::Account, PgError> {
         // TODO hash password before sending to database
         let query_string = format!("INSERT INTO {} ({}, {}) VALUES ($1, $2) RETURNING *", account::ACCOUNT_TABLE_NAME, account::COLUMN_ACCOUNT_NAME, account::COLUMN_ACCOUNT_PASSWORD);
-        let row = self.connection.query_one(query_string.as_str(), &[&account.name, &account.password])?;
+        let row = self.connection.query_one(query_string.as_str(), &[&account.name, &account.password_hash])?;
         DatabaseHandler::row_to_account(&row)
     }
 
@@ -71,7 +71,7 @@ impl DatabaseHandler {
 
     pub fn update_account(&mut self, account: &account::Account) -> Result<account::Account, PgError> {
         let query_string = format!("UPDATE {} SET {} = $1, {} = $2 WHERE {} = $3 RETURNING *", account::ACCOUNT_TABLE_NAME, account::COLUMN_ACCOUNT_NAME, account::COLUMN_ACCOUNT_PASSWORD, account::COLUMN_ACCOUNT_ID);
-        let row = self.connection.query_one(query_string.as_str(), &[&account.name, &account.password, &account.id])?;
+        let row = self.connection.query_one(query_string.as_str(), &[&account.name, &account.password_hash, &account.id])?;
         DatabaseHandler::row_to_account(&row)
     }
 
@@ -87,9 +87,9 @@ impl DatabaseHandler {
         let password: String = row.try_get(account::COLUMN_ACCOUNT_PASSWORD)?;
 
         Ok(account::Account {
-            id: Some(id),
+            id: id,
             name,
-            password,
+            password_hash: password,
         })
     }
 

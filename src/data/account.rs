@@ -1,4 +1,5 @@
 use serde::{Deserialize, Serialize};
+use super::schema::accounts;
 
 pub const ACCOUNT_TABLE_NAME: &str = "account";
 pub const COLUMN_ACCOUNT_ID: &str = "id";
@@ -9,5 +10,12 @@ pub const COLUMN_ACCOUNT_PASSWORD: &str = "password_hash";
 pub struct Account {
     pub id: i32,
     pub name: String,
-    pub password: String,
+    pub password_hash: String,
+}
+
+#[derive(Insertable)]
+#[table_name="accounts"]
+pub struct NewAccount<'a> {
+    pub name: &'a str,
+    pub password_hash: &'a str,
 }
