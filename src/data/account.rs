@@ -5,9 +5,9 @@ pub const COLUMN_ACCOUNT_ID: &str = "account_id";
 pub const COLUMN_ACCOUNT_NAME: &str = "username";
 pub const COLUMN_ACCOUNT_PASSWORD: &str = "password_hash";
 
-#[derive(Clone, Debug, Deserialize, Serialize)]
+#[derive(Clone, Debug, Deserialize, Serialize, Queryable)]
 pub struct Account {
-    pub id: Option<i32>,
+    pub id: i32,
     pub name: String,
     pub password: String,
 }
