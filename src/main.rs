@@ -110,7 +110,7 @@ fn build_create_account_filter(
         .map(move |account: data::account::Account| {
             match handler_clone.lock().unwrap().create_account(&account) {
                 Ok(created_account) => warp::reply::with_status(
-                    format!("Account created with id {}", created_account.id.unwrap()),
+                    format!("Account created with id {}", created_account.id),
                     warp::http::StatusCode::CREATED
                 ),
                 Err(error) => warp::reply::with_status(
@@ -133,9 +133,9 @@ fn build_update_account_filter(
         .and(warp::body::form())
         .map(move |id, account: data::account::Account| {
             let updated_account = data::account::Account {
-                id: Some(id),
+                id: id,
                 name: account.name.clone(),
-                password: account.password.clone(),
+                password_hash: account.password_hash.clone(),
             };
 
             match handler_clone
@@ -144,7 +144,7 @@ fn build_update_account_filter(
                 .update_account(&updated_account)
             {
                 Ok(account) => warp::reply::with_status(
-                    format!("Updated account with id {}", account.id.unwrap()),
+                    format!("Updated account with id {}", account.id),
                     warp::http::StatusCode::OK
                 ),
                 Err(error) => warp::reply::with_status(
