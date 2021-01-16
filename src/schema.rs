@@ -1,6 +1,6 @@
 table! {
-    accounts (account_id) {
-        account_id -> Int4,
+    accounts (id) {
+        id -> Int4,
         username -> Varchar,
         password_hash -> Varchar,
     }
@@ -22,11 +22,21 @@ table! {
     }
 }
 
+table! {
+    web_sessions (id) {
+        id -> Int4,
+        cookie -> Varchar,
+        account_id -> Int4,
+    }
+}
+
 joinable!(random_table_elements -> random_tables (table_id));
 joinable!(random_tables -> accounts (created_by));
+joinable!(web_sessions -> accounts (account_id));
 
 allow_tables_to_appear_in_same_query!(
     accounts,
     random_table_elements,
     random_tables,
+    web_sessions,
 );

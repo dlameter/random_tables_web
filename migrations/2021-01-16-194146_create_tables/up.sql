@@ -3,7 +3,7 @@ CREATE TABLE random_tables (
     id serial PRIMARY KEY,
     created_by int NOT NULL,
     name varchar(128) NOT NULL,
-    FOREIGN KEY (created_by) REFERENCES accounts (account_id)
+    FOREIGN KEY (created_by) REFERENCES accounts (id)
 );
 
 CREATE TABLE random_table_elements (
