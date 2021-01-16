@@ -1,7 +1,7 @@
 use serde::{Deserialize, Serialize};
 
 pub const ACCOUNT_TABLE_NAME: &str = "account";
-pub const COLUMN_ACCOUNT_ID: &str = "account_id";
+pub const COLUMN_ACCOUNT_ID: &str = "id";
 pub const COLUMN_ACCOUNT_NAME: &str = "username";
 pub const COLUMN_ACCOUNT_PASSWORD: &str = "password_hash";
 
