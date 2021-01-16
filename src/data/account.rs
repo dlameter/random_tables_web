@@ -1,5 +1,5 @@
 use serde::{Deserialize, Serialize};
-use super::schema::accounts;
+use crate::schema::accounts;
 
 pub const ACCOUNT_TABLE_NAME: &str = "account";
 pub const COLUMN_ACCOUNT_ID: &str = "id";
@@ -16,6 +16,6 @@ pub struct Account {
 #[derive(Insertable)]
 #[table_name="accounts"]
 pub struct NewAccount<'a> {
-    pub name: &'a str,
+    pub username: &'a str,
     pub password_hash: &'a str,
 }
