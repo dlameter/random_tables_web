@@ -1,5 +1,5 @@
-extern crate random_tables_web;
 extern crate diesel;
+extern crate random_tables_web;
 
 use self::random_tables_web::*;
 use std::io::{stdin, Read};
@@ -18,5 +18,5 @@ fn main() {
     let password = password.trim();
 
     let account = create_account(&connection, &username, &password);
-    println!("Saved account {} with id {}", account.name, account.id);
+    println!("Saved account {} with id {}", account.username, account.id);
 }
