@@ -33,11 +33,34 @@ async fn main() {
 
     let cors = warp::cors().allow_origin("http://localhost:3000")
         .allow_methods(vec!["GET", "POST"])
-        .allow_header("content-type");
+        .allow_headers(vec!["content-type", "cookie"])
+        .allow_credentials(true);
 
-    let routes = accounts_endpoint.with(cors);
+    let cookie: BoxedFilter<(String,)> = warp::any()
+        .and(warp::filters::cookie::optional("EXAUTH"))
+        .and_then(move |key: Option<String>| async move {
+                match key {
+                Some(value) => Ok::<String, std::convert::Infallible>(value),
+                None => Ok("new_cookie".to_string()),
+            }
+        })
+        .boxed();
+    
+    let cookie_test = warp::get()
+        .and(warp::path!("cookie"))
+        .and(warp::path::end())
+        .and(cookie)
+        .map(|key| {
+            warp::reply::with_header(warp::reply(), "Set-Cookie", format!("EXAUTH={}", key))
+        });
+
+
+    let routes = cookie_test.with(cors.clone()).or(accounts_endpoint.with(cors));
 
     warp::serve(routes).run(([127, 0, 0, 1], 3030)).await;
+}
+
+fn cookie_test_endpoint() {
 }
 
 fn build_account_endpoint(
