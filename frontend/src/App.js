@@ -16,6 +16,7 @@ import Container from '@material-ui/core/Container';
 import Home from './Home.js';
 import { AccountPage } from './Account.js';
 import CreateAccount from './CreateAccount.js';
+import { useCookies } from 'react-cookie';
 
 const useStyles = makeStyles((theme) => ({
   root: {
@@ -34,6 +35,8 @@ const useStyles = makeStyles((theme) => ({
 
 function App() {
     const classes = useStyles();
+
+    const [cookies] = useCookies(['auth']);
     
     return (
         <Router>
@@ -46,7 +49,12 @@ function App() {
                         Random Tables Web
                     </Typography>
                     <Button color="inherit" component={Link} to="/">Home</Button>
-                    <Button color="inherit" component={Link} to="/createAccount">Sign up</Button>
+                    { !cookies.auth && 
+                        <Button color="inherit" component={Link} to="/createAccount">Sign up</Button>
+                    }
+                    { cookies.auth && 
+                        <Button color="inherit" component={Link} to="/createAccount">Log out</Button>
+                    }
                 </Toolbar>
             </AppBar>
             <Toolbar></Toolbar>

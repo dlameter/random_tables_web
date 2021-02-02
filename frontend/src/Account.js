@@ -18,7 +18,7 @@ export const Account = class Account extends React.Component {
     
     componentDidMount() {
         const url = BackendURLBuilder.getAccountById(this.state.accountId);
-        axios.get(url)
+        axios.get(url, { withCredentials: true })
             .then(
                 (res) => {
                     let account = res.data;

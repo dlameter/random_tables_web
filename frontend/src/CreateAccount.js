@@ -37,7 +37,7 @@ class CreateAccount extends React.Component {
     onSubmit(event) {
         const url = BackendURLBuilder.createAccount();
         const data = { name: this.state.name, password: this.state.password};
-        axios.post(url, data).then(
+        axios.post(url, data, { withCredentials: true }).then(
             (result) => {
                 
             },

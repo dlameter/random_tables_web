@@ -8,6 +8,10 @@ class BackendURLBuilder {
     static createAccount() {
         return urlBase + "/account";
     }
+
+    static withPath(path) {
+        return urlBase + path;
+    }
 }
 
 export default BackendURLBuilder;

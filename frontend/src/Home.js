@@ -1,6 +1,11 @@
+import CookieTest from './CookieForm';
+
 function Home() {
     return (
-        <h1>Welcome to Random Tables Web!</h1>
+        <div>
+            <h1>Welcome to Random Tables Web!</h1>
+            <CookieTest />
+        </div>
     );
 }
 
