@@ -349,3 +349,13 @@ impl DatabaseHandler {
         Ok(Some(elements))
     }
 }
+
+pub fn create_db_url(db_config: &DatabaseConfig) -> String {
+    format!(
+        "host={} dbname={} user={} password={}",
+        db_config.host.as_str(),
+        db_config.dbname.as_str(),
+        db_config.user.as_str(),
+        db_config.password.as_str()
+    )
+}

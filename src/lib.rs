@@ -12,6 +12,7 @@ use self::data::account::{Account, NewAccount};
 pub mod data;
 pub mod database_handler;
 pub mod schema;
+pub mod session;
 
 pub fn establish_database_connection() -> PgConnection {
     dotenv().ok();
