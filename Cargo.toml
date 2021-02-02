@@ -14,5 +14,5 @@ warp = "0.2.5"
 liquid = "0.20"
 postgres = "0.18.1"
 config = "0.10.1"
-diesel = { version = "1.4.5", features = ["postgres"] }
+diesel = { version = "1.4.5", features = ["postgres", "r2d2"] }
 dotenv = "0.15.0"
