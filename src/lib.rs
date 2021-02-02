@@ -26,15 +26,18 @@ pub fn create_account<'a>(
     username: &'a str,
     password_hash: &'a str,
 ) -> Account {
-    use schema::accounts;
+    use schema::accounts as a;
 
     let new_account = NewAccount {
         username: username,
         password_hash: password_hash,
     };
 
-    diesel::insert_into(accounts::table)
+    let result = diesel::insert_into(a::table)
         .values(&new_account)
-        .get_result(connection)
-        .expect("Error saving new account")
+        .returning((a::dsl::id, a::dsl::username))
+        .get_result::<Account>(connection)
+        .expect("Error saving new account");
+
+    result
 }
