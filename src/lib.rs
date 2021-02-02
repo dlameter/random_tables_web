@@ -13,11 +13,11 @@ pub mod data;
 pub mod schema;
 pub mod session;
 
-pub fn establish_database_connection() -> PgConnection {
+pub fn establish_database_connection() -> session::PooledPg {
     dotenv().ok();
 
     let database_url = env::var("DATABASE_URL").expect("DATABASE_URL must be set");
-    PgConnection::establish(&database_url).expect(&format!("Error connecting to {}", database_url))
+    session::pg_pool(&database_url).get().unwrap()
 }
 
 pub fn create_account<'a>(
