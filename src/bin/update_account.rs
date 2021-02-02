@@ -4,7 +4,7 @@ extern crate random_tables_web;
 use diesel::prelude::*;
 use random_tables_web::*;
 use std::env::args;
-use std::io::{stdin, Read};
+use std::io::stdin;
 
 fn main() {
     use self::schema::accounts::dsl::*;

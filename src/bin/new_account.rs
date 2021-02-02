@@ -2,7 +2,7 @@ extern crate diesel;
 extern crate random_tables_web;
 
 use self::random_tables_web::*;
-use std::io::{stdin, Read};
+use std::io::stdin;
 
 fn main() {
     let connection = establish_database_connection();
