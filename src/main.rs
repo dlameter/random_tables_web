@@ -1,7 +1,7 @@
 use std::sync::{Arc, Mutex};
 
 use config;
-use warp::{Filter, filters::BoxedFilter, Reply};
+use warp::{filters::BoxedFilter, Filter, Reply};
 
 use random_tables_web::data;
 use random_tables_web::database_handler::{DatabaseConfig, DatabaseHandler};
@@ -11,13 +11,14 @@ type SharedDatabaseHandler = Arc<Mutex<DatabaseHandler>>;
 #[tokio::main]
 async fn main() {
     let mut settings = config::Config::default();
-    settings.merge(config::File::with_name("config.json")).unwrap();
-    
+    settings
+        .merge(config::File::with_name("config.json"))
+        .unwrap();
     let dbconfig = DatabaseConfig::new(
         settings.get_str("host").unwrap(),
         settings.get_str("dbname").unwrap(),
         settings.get_str("user").unwrap(),
-        settings.get_str("password").unwrap()
+        settings.get_str("password").unwrap(),
     );
 
     let handler = match DatabaseHandler::new(&dbconfig) {
@@ -31,7 +32,8 @@ async fn main() {
 
     let accounts_endpoint = build_account_endpoint(&handler);
 
-    let cors = warp::cors().allow_origin("http://localhost:3000")
+    let cors = warp::cors()
+        .allow_origin("http://localhost:3000")
         .allow_methods(vec!["GET", "POST"])
         .allow_headers(vec!["content-type", "cookie"])
         .allow_credentials(true);
@@ -39,13 +41,12 @@ async fn main() {
     let cookie: BoxedFilter<(String,)> = warp::any()
         .and(warp::filters::cookie::optional("EXAUTH"))
         .and_then(move |key: Option<String>| async move {
-                match key {
+            match key {
                 Some(value) => Ok::<String, std::convert::Infallible>(value),
                 None => Ok("new_cookie".to_string()),
             }
         })
         .boxed();
-    
     let cookie_test = warp::get()
         .and(warp::path!("cookie"))
         .and(warp::path::end())
@@ -54,18 +55,14 @@ async fn main() {
             warp::reply::with_header(warp::reply(), "Set-Cookie", format!("EXAUTH={}", key))
         });
 
-
-    let routes = cookie_test.with(cors.clone()).or(accounts_endpoint.with(cors));
+    let routes = cookie_test
+        .with(cors.clone())
+        .or(accounts_endpoint.with(cors));
 
     warp::serve(routes).run(([127, 0, 0, 1], 3030)).await;
 }
 
-fn cookie_test_endpoint() {
-}
-
-fn build_account_endpoint(
-    handler: &SharedDatabaseHandler,
-) -> BoxedFilter<(impl warp::Reply,)> {
+fn build_account_endpoint(handler: &SharedDatabaseHandler) -> BoxedFilter<(impl warp::Reply,)> {
     warp::path("account")
         .and(
             build_account_by_id_filter(handler)
@@ -73,14 +70,12 @@ fn build_account_endpoint(
                 .or(build_tables_by_account_id_filter(handler))
                 .or(build_delete_account_filter(handler))
                 .or(build_create_account_filter(handler))
-                .or(build_update_account_filter(handler))
+                .or(build_update_account_filter(handler)),
         )
         .boxed()
 }
 
-fn build_account_by_id_filter(
-    handler: &SharedDatabaseHandler,
-) -> BoxedFilter<(impl warp::Reply,)> {
+fn build_account_by_id_filter(handler: &SharedDatabaseHandler) -> BoxedFilter<(impl warp::Reply,)> {
     let handler_clone = Arc::clone(handler);
     warp::get()
         .and(warp::path!("id" / i32))
@@ -88,13 +83,12 @@ fn build_account_by_id_filter(
         .map(
             move |id| match handler_clone.lock().unwrap().find_account_by_id(&id) {
                 Some(account) => warp::reply::with_status(
-                    warp::reply::json(&account), 
-                    warp::http::StatusCode::OK
-                ).into_response(),
-                None => warp::reply::with_status(
-                    warp::reply(), 
-                    warp::http::StatusCode::NOT_FOUND
-                ).into_response(),
+                    warp::reply::json(&account),
+                    warp::http::StatusCode::OK,
+                )
+                .into_response(),
+                None => warp::reply::with_status(warp::reply(), warp::http::StatusCode::NOT_FOUND)
+                    .into_response(),
             },
         )
         .boxed()
@@ -110,13 +104,12 @@ fn build_account_by_name_filter(
         .map(
             move |name| match handler_clone.lock().unwrap().find_account_by_name(&name) {
                 Some(account) => warp::reply::with_status(
-                    warp::reply::json(&account), 
-                    warp::http::StatusCode::OK
-                ).into_response(),
-                None => warp::reply::with_status(
-                    warp::reply(), 
-                    warp::http::StatusCode::NOT_FOUND
-                ).into_response(),
+                    warp::reply::json(&account),
+                    warp::http::StatusCode::OK,
+                )
+                .into_response(),
+                None => warp::reply::with_status(warp::reply(), warp::http::StatusCode::NOT_FOUND)
+                    .into_response(),
             },
         )
         .boxed()
@@ -134,11 +127,11 @@ fn build_create_account_filter(
             match handler_clone.lock().unwrap().create_account(&account) {
                 Ok(created_account) => warp::reply::with_status(
                     format!("Account created with id {}", created_account.id),
-                    warp::http::StatusCode::CREATED
+                    warp::http::StatusCode::CREATED,
                 ),
                 Err(error) => warp::reply::with_status(
                     format!("Failed to create account with error: {}", error),
-                    warp::http::StatusCode::INTERNAL_SERVER_ERROR
+                    warp::http::StatusCode::INTERNAL_SERVER_ERROR,
                 ),
             }
         })
@@ -168,12 +161,12 @@ fn build_update_account_filter(
             {
                 Ok(account) => warp::reply::with_status(
                     format!("Updated account with id {}", account.id),
-                    warp::http::StatusCode::OK
+                    warp::http::StatusCode::OK,
                 ),
                 Err(error) => warp::reply::with_status(
                     format!("Failed to update account with error: {}", error),
-                    warp::http::StatusCode::INTERNAL_SERVER_ERROR
-                )
+                    warp::http::StatusCode::INTERNAL_SERVER_ERROR,
+                ),
             }
         })
         .boxed()
@@ -189,13 +182,15 @@ fn build_delete_account_filter(
         .map(
             move |id| match handler_clone.lock().unwrap().delete_account(&id) {
                 Ok(account) => warp::reply::with_status(
-                    warp::reply::json(&account), 
-                    warp::http::StatusCode::OK
-                ).into_response(),
+                    warp::reply::json(&account),
+                    warp::http::StatusCode::OK,
+                )
+                .into_response(),
                 Err(error) => warp::reply::with_status(
                     format!("Failed to delete account id {} with error: {}", id, error),
-                    warp::http::StatusCode::INTERNAL_SERVER_ERROR
-                ).into_response(),
+                    warp::http::StatusCode::INTERNAL_SERVER_ERROR,
+                )
+                .into_response(),
             },
         )
         .boxed()
