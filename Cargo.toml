@@ -14,3 +14,4 @@ warp = "0.2.5"
 postgres = "0.18.1"
 diesel = { version = "1.4.5", features = ["postgres", "r2d2"] }
 dotenv = "0.15.0"
+rand = "0.8.2"
