@@ -11,24 +11,6 @@ async fn main() {
         .allow_headers(vec!["content-type", "cookie"])
         .allow_credentials(true);
 
-    let cookie: BoxedFilter<(String,)> = warp::any()
-        .and(warp::filters::cookie::optional("EXAUTH"))
-        .and_then(move |key: Option<String>| async move {
-            match key {
-                Some(value) => Ok::<String, std::convert::Infallible>(value),
-                None => Ok("new_cookie".to_string()),
-            }
-        })
-        .boxed();
-
-    let cookie_test = warp::get()
-        .and(warp::path!("cookie"))
-        .and(warp::path::end())
-        .and(cookie)
-        .map(|key| {
-            warp::reply::with_header(warp::reply(), "Set-Cookie", format!("EXAUTH={}", key))
-        });
-
     let routes = cookie_test.with(cors.clone());
 
     warp::serve(routes).run(([127, 0, 0, 1], 3030)).await;
