@@ -65,6 +65,27 @@ impl Session {
         }
         None
     }
+
+    pub fn clear(&mut self) {
+        // Clear data from database
+        use crate::schema::web_sessions::dsl::*;
+        if let Some(session_id) = self.id {
+            diesel::delete(web_sessions)
+                .filter(id.eq(session_id))
+                .execute(&self.connection)
+                .map_err(|error| {
+                    println!(
+                        "Failed to delete session with id {}: {:?}",
+                        session_id, error
+                    );
+                })
+                .ok();
+        }
+
+        // Clear data from struct instance
+        self.id = None;
+        self.account = None;
+    }
 }
 
 fn random_key(len: usize) -> String {
