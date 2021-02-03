@@ -20,8 +20,15 @@ async fn main() {
         .and(session_closure())
         .and(warp::body::json())
         .and_then(|session, login_data| async move { do_login(session, login_data) });
+    let logout = warp::post()
+        .and(warp::path("logout"))
+        .and(warp::path::end())
+        .and(session_closure())
+        .and_then(|session| async move { do_logout(session) });
 
-    let routes = login.with(cors.clone());
+    let auth = login.or(logout);
+
+    let routes = auth.with(cors.clone());
 
     warp::serve(routes).run(([127, 0, 0, 1], 3030)).await;
 }
@@ -50,6 +57,10 @@ fn do_login(
     }
 }
 
-fn do_logout() -> Result<Response<String>, Rejection> {
-    Err(warp::reject())
+fn do_logout(mut session: session::Session) -> Result<Response<String>, Rejection> {
+    session.clear();
+    Response::builder()
+        .status(warp::http::StatusCode::FOUND)
+        .body(String::new())
+        .map_err(|error| warp::reject())
 }
