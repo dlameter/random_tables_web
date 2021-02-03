@@ -102,7 +102,7 @@ fn random_key(len: usize) -> String {
         .collect()
 }
 
-pub fn create_session_filter(database_url: &str) -> BoxedFilter<(Session,)> {
+pub fn create_optional_session_filter(database_url: &str) -> BoxedFilter<(Session,)> {
     let pool = pg_pool(database_url);
     warp::any()
         .and(cookie::optional("EXAUTH"))

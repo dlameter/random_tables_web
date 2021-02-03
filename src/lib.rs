@@ -13,11 +13,9 @@ pub mod data;
 pub mod schema;
 pub mod session;
 
-pub fn establish_database_connection() -> session::PooledPg {
+pub fn get_database_url() -> String {
     dotenv().ok();
-
-    let database_url = env::var("DATABASE_URL").expect("DATABASE_URL must be set");
-    session::pg_pool(&database_url).get().unwrap()
+    env::var("DATABASE_URL").expect("DATABASE_URL must be set")
 }
 
 pub fn create_account<'a>(
