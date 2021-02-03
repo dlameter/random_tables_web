@@ -5,9 +5,15 @@ use diesel::r2d2::{ConnectionManager, Pool, PooledConnection};
 use rand::distributions::Alphanumeric;
 use rand::thread_rng;
 use rand::Rng;
+use warp::filters::{cookie, BoxedFilter};
+use warp::{self, Filter};
 
 pub type PgPool = Pool<ConnectionManager<PgConnection>>;
 pub type PooledPg = PooledConnection<ConnectionManager<PgConnection>>;
+
+#[derive(Debug)]
+pub struct NoBDReady;
+impl warp::reject::Reject for NoBDReady {}
 
 pub struct Session {
     connection: PooledPg,
@@ -94,6 +100,26 @@ fn random_key(len: usize) -> String {
         .take(len)
         .map(char::from)
         .collect()
+}
+
+pub fn create_session_filter(database_url: &str) -> BoxedFilter<(Session,)> {
+    let pool = pg_pool(database_url);
+    warp::any()
+        .and(cookie::optional("EXAUTH"))
+        .and_then(move |key: Option<String>| {
+            let pool = pool.clone();
+            async move {
+                let key = key.as_ref().map(String::as_str);
+                match pool.get() {
+                    Ok(connection) => Ok(Session::from_key(connection, key)),
+                    Err(error) => {
+                        println!("Failed to connect to database: {}", error);
+                        Err(warp::reject::custom(NoBDReady))
+                    }
+                }
+            }
+        })
+        .boxed()
 }
 
 pub fn pg_pool(database_url: &str) -> Pool<ConnectionManager<PgConnection>> {
