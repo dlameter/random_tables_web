@@ -33,8 +33,13 @@ async fn main() {
         .and(session_closure())
         .and(warp::body::json())
         .and_then(|session, signup_data| async move { do_signup(session, signup_data) });
+    let whois = warp::get()
+        .and(warp::path("whois"))
+        .and(warp::path::end())
+        .and(session_closure())
+        .and_then(|session| async move { do_whois(session) });
 
-    let auth = login.or(logout).or(signup);
+    let auth = login.or(logout).or(signup).or(whois);
 
     let routes = auth.with(cors.clone());
 
