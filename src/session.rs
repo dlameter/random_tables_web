@@ -92,6 +92,17 @@ impl Session {
         self.id = None;
         self.account = None;
     }
+
+    pub fn logged_in(&self) -> bool {
+        if self.account.is_some() && self.id.is_some() {
+            return true;
+        }
+        false
+    }
+
+    pub fn connection(&self) -> &PooledPg {
+        &self.connection
+    }
 }
 
 fn random_key(len: usize) -> String {
