@@ -1,5 +1,6 @@
 use diesel::prelude::*;
 use serde::Deserialize;
+use serde_json;
 use warp::{filters::BoxedFilter, http::Response, Filter, Rejection, Reply};
 
 use random_tables_web;
@@ -113,4 +114,21 @@ fn do_signup(
             .body(format!("Failed to create account: {}", error))
             .map_err(|error| warp::reject()),
     }
+}
+
+fn do_whois(session: session::Session) -> Result<Response<String>, Rejection> {
+    if session.logged_in() {
+        if let Some(account) = session.account() {
+            if let Ok(string) = serde_json::to_string(account) {
+                return Response::builder()
+                    .status(warp::http::StatusCode::FOUND)
+                    .body(string)
+                    .map_err(|error| warp::reject());
+            }
+        }
+    }
+    Response::builder()
+        .status(warp::http::StatusCode::UNAUTHORIZED)
+        .body(String::new())
+        .map_err(|error| warp::reject())
 }
