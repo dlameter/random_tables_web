@@ -1,10 +1,10 @@
 use diesel::prelude::*;
 use serde::Deserialize;
 use serde_json;
-use warp::{filters::BoxedFilter, http::Response, Filter, Rejection, Reply};
+use warp::{http::Response, Filter, Rejection};
 
 use random_tables_web;
-use random_tables_web::{data, session};
+use random_tables_web::session;
 
 #[tokio::main]
 async fn main() {
