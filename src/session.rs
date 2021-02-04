@@ -103,6 +103,10 @@ impl Session {
     pub fn connection(&self) -> &PooledPg {
         &self.connection
     }
+
+    pub fn account(&self) -> &Option<Account> {
+        &self.account
+    }
 }
 
 fn random_key(len: usize) -> String {
