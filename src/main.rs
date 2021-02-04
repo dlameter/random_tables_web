@@ -1,3 +1,4 @@
+use diesel::prelude::*;
 use serde::Deserialize;
 use warp::{filters::BoxedFilter, http::Response, Filter, Rejection, Reply};
 
@@ -25,8 +26,14 @@ async fn main() {
         .and(warp::path::end())
         .and(session_closure())
         .and_then(|session| async move { do_logout(session) });
+    let signup = warp::post()
+        .and(warp::path("signup"))
+        .and(warp::path::end())
+        .and(session_closure())
+        .and(warp::body::json())
+        .and_then(|session, signup_data| async move { do_signup(session, signup_data) });
 
-    let auth = login.or(logout);
+    let auth = login.or(logout).or(signup);
 
     let routes = auth.with(cors.clone());
 
@@ -63,4 +70,47 @@ fn do_logout(mut session: session::Session) -> Result<Response<String>, Rejectio
         .status(warp::http::StatusCode::FOUND)
         .body(String::new())
         .map_err(|error| warp::reject())
+}
+
+type SignupData = LoginData;
+
+impl SignupData {
+    fn validate(self) -> Result<Self, &'static str> {
+        if self.username.len() < 3 {
+            Err("Username must be at least 3 characters")
+        } else if self.password.len() < 8 {
+            Err("Password must be at least 8 characters")
+        } else {
+            Ok(self)
+        }
+    }
+}
+
+fn do_signup(
+    session: session::Session,
+    signup_data: SignupData,
+) -> Result<Response<String>, Rejection> {
+    let result = signup_data
+        .validate()
+        .map_err(|error| error.to_string())
+        .and_then(|signup_data| {
+            use random_tables_web::schema::accounts::dsl::*;
+            diesel::insert_into(accounts)
+                .values((
+                    username.eq(&signup_data.username),
+                    password_hash.eq(&signup_data.password),
+                ))
+                .execute(session.connection())
+                .map_err(|error| format!("{:?}", error).to_string())
+        });
+    match result {
+        Ok(_) => Response::builder()
+            .status(warp::http::StatusCode::CREATED)
+            .body(String::new())
+            .map_err(|error| warp::reject()),
+        Err(error) => Response::builder()
+            .status(warp::http::StatusCode::BAD_REQUEST)
+            .body(format!("Failed to create account: {}", error))
+            .map_err(|error| warp::reject()),
+    }
 }
