@@ -1,8 +1,7 @@
 import { Button, TextField } from '@material-ui/core';
-import axios from 'axios';
 import React, { useState } from 'react';
 import { Redirect } from 'react-router-dom';
-import BackendURLBuilder from './BackendURLBuilder';
+import { useAuth } from './auth.js';
 
 export default function LoginForm(props) {
     const [username, setUsername] = useState("");
@@ -10,10 +9,10 @@ export default function LoginForm(props) {
     const [error, setError] = useState(null);
     const [redirect, setRedirect] = useState(false);
 
+    const auth = useAuth();
+
     function onSubmit(e) {
-        const url = BackendURLBuilder.login();
-        const data = { username: username, password: password };
-        axios.post(url, data, { withCredentials: true }).then((result) => { setRedirect(true) }, (error) => { setError(error) });
+        auth.login(username, password).then((result) => { setRedirect(true) }, (error) => { setError(error) });
         e.preventDefault();
     }
 

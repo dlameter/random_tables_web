@@ -4,11 +4,14 @@ import ReactDOM from 'react-dom';
 import './index.css';
 import App from './App';
 import reportWebVitals from './reportWebVitals';
+import { ProvideAuth } from './auth';
 
 ReactDOM.render(
   <React.StrictMode>
     <CookiesProvider>
-      <App />
+      <ProvideAuth>
+        <App />
+      </ProvideAuth>
     </CookiesProvider>
   </React.StrictMode>,
   document.getElementById('root')

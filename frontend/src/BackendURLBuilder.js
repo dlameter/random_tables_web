@@ -13,6 +13,10 @@ class BackendURLBuilder {
         return urlBase + "/login";
     }
 
+    static logout() {
+        return urlBase + "/logout";
+    }
+
     static withPath(path) {
         return urlBase + path;
     }

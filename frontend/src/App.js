@@ -17,7 +17,7 @@ import Home from './Home.js';
 import { AccountPage } from './Account.js';
 import CreateAccount from './CreateAccount.js';
 import LoginForm from './LoginForm.js';
-import { useCookies } from 'react-cookie';
+import { useAuth } from './auth.js';
 
 const useStyles = makeStyles((theme) => ({
     root: {
@@ -37,7 +37,7 @@ const useStyles = makeStyles((theme) => ({
 function App() {
     const classes = useStyles();
 
-    const [cookies] = useCookies(['EXAUTH']);
+    const auth = useAuth();
 
     return (
         <Router>
@@ -50,13 +50,16 @@ function App() {
                         Random Tables Web
                     </Typography>
                     <Button color="inherit" component={Link} to="/">Home</Button>
-                    {!cookies.EXAUTH &&
-                        <Button color="inherit" component={Link} to="/signup">Sign up</Button>
-                    }
-                    {cookies.EXAUTH &&
-                        <Button color="inherit" component={Link} to="/signup">Log out</Button>
-                    }
-                    <Button color="inherit" component={Link} to="/login">Login</Button>
+                    {auth.user ? (
+                        <>
+                            <Button color="inherit" onClick={() => auth.logout()}>Log out</Button>
+                        </>
+                    ) : (
+                            <>
+                                <Button color="inherit" component={Link} to="/login">Login</Button>
+                                <Button color="inherit" component={Link} to="/signup">Sign up</Button>
+                            </>
+                        )}
                 </Toolbar>
             </AppBar>
             <Toolbar></Toolbar>
