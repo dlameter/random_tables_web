@@ -1,5 +1,6 @@
 use crate::schema::accounts;
 use crate::session::PooledPg;
+use bcrypt;
 use diesel::prelude::*;
 use serde::{Deserialize, Serialize};
 
@@ -35,7 +36,7 @@ impl Account {
     }
 
     fn test_password(password: &str, password_hash: &str) -> bool {
-        password == password_hash
+        bcrypt::verify(password, password_hash).expect("Failed to verify password")
     }
 }
 
