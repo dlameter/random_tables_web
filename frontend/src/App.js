@@ -16,6 +16,7 @@ import Container from '@material-ui/core/Container';
 import Home from './Home.js';
 import { AccountPage } from './Account.js';
 import CreateAccount from './CreateAccount.js';
+import LoginForm from './LoginForm.js';
 import { useCookies } from 'react-cookie';
 
 const useStyles = makeStyles((theme) => ({
@@ -36,7 +37,7 @@ const useStyles = makeStyles((theme) => ({
 function App() {
     const classes = useStyles();
 
-    const [cookies] = useCookies(['auth']);
+    const [cookies] = useCookies(['EXAUTH']);
 
     return (
         <Router>
@@ -55,6 +56,7 @@ function App() {
                     {cookies.auth &&
                         <Button color="inherit" component={Link} to="/signup">Log out</Button>
                     }
+                    <Button color="inherit" component={Link} to="/login">Login</Button>
                 </Toolbar>
             </AppBar>
             <Toolbar></Toolbar>
@@ -68,6 +70,9 @@ function App() {
                     </Route>
                     <Route path="/signup">
                         <CreateAccount />
+                    </Route>
+                    <Route path="/login">
+                        <LoginForm />
                     </Route>
                 </Switch>
             </Container>

@@ -9,6 +9,10 @@ class BackendURLBuilder {
         return urlBase + "/signup";
     }
 
+    static login() {
+        return urlBase + "/login";
+    }
+
     static withPath(path) {
         return urlBase + path;
     }
