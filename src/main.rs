@@ -10,7 +10,7 @@ use random_tables_web::session;
 async fn main() {
     let cors = warp::cors()
         .allow_origin("http://localhost:3000")
-        .allow_methods(vec!["GET", "POST"])
+        .allow_methods(vec!["GET", "POST", "OPTIONS"])
         .allow_headers(vec!["content-type", "cookie"])
         .allow_credentials(true);
     let sessions = session::create_optional_session_filter(&random_tables_web::get_database_url());
@@ -41,7 +41,7 @@ async fn main() {
 
     let auth = login.or(logout).or(signup).or(whois);
 
-    let routes = auth.with(cors.clone());
+    let routes = auth.with(cors);
 
     warp::serve(routes).run(([127, 0, 0, 1], 3030)).await;
 }
