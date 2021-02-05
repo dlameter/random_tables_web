@@ -20,6 +20,10 @@ class BackendURLBuilder {
     static withPath(path) {
         return urlBase + path;
     }
+
+    static whois() {
+        return urlBase + "/whois"
+    }
 }
 
 export default BackendURLBuilder;

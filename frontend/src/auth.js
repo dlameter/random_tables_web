@@ -1,6 +1,7 @@
 import axios from 'axios';
-import React, { createContext, useContext, useState } from 'react';
+import React, { createContext, useContext, useEffect, useState } from 'react';
 import BackendURLBuilder from './BackendURLBuilder';
+import { useCookies } from 'react-cookie';
 
 const authContext = createContext();
 
@@ -15,6 +16,7 @@ export const useAuth = () => {
 
 function useProvideAuth() {
     const [user, setUser] = useState(null);
+    const [cookies] = useCookies(["EXAUTH"]);
 
     const login = (username, password) => {
         const url = BackendURLBuilder.login();
@@ -28,6 +30,17 @@ function useProvideAuth() {
         return axios.post(url, null, { withCredentials: true })
             .then((response) => { setUser(null); return response; });
     }
+
+    const whois = () => {
+        const url = BackendURLBuilder.whois();
+        return axios.get(url, { withCredentials: true }).then((response) => { setUser(response.data); return response; })
+    }
+
+    useEffect(() => {
+        if (cookies.EXAUTH) {
+            whois();
+        }
+    }, [cookies.EXAUTH]);
 
     return { user, login, logout };
 }
