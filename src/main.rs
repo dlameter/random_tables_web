@@ -59,7 +59,7 @@ fn do_login(
     if let Some(cookie) = session.authenticate(&login_data.username, &login_data.password) {
         Response::builder()
             .header("set-cookie", format!("EXAUTH={}", cookie))
-            .status(warp::http::StatusCode::FOUND)
+            .status(warp::http::StatusCode::OK)
             .body("".to_string())
             .map_err(|error| warp::reject::reject())
     } else {
@@ -73,7 +73,7 @@ fn do_login(
 fn do_logout(mut session: session::Session) -> Result<Response<String>, Rejection> {
     session.clear();
     Response::builder()
-        .status(warp::http::StatusCode::FOUND)
+        .status(warp::http::StatusCode::OK)
         .body(String::new())
         .map_err(|error| warp::reject())
 }
@@ -128,7 +128,7 @@ fn do_whois(session: session::Session) -> Result<Response<String>, Rejection> {
         if let Some(account) = session.account() {
             if let Ok(string) = serde_json::to_string(account) {
                 return Response::builder()
-                    .status(warp::http::StatusCode::FOUND)
+                    .status(warp::http::StatusCode::OK)
                     .body(string)
                     .map_err(|error| warp::reject());
             }
