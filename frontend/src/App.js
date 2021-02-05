@@ -50,10 +50,10 @@ function App() {
                         Random Tables Web
                     </Typography>
                     <Button color="inherit" component={Link} to="/">Home</Button>
-                    {!cookies.auth &&
+                    {!cookies.EXAUTH &&
                         <Button color="inherit" component={Link} to="/signup">Sign up</Button>
                     }
-                    {cookies.auth &&
+                    {cookies.EXAUTH &&
                         <Button color="inherit" component={Link} to="/signup">Log out</Button>
                     }
                     <Button color="inherit" component={Link} to="/login">Login</Button>
