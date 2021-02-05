@@ -6,7 +6,7 @@ class BackendURLBuilder {
     }
 
     static createAccount() {
-        return urlBase + "/account";
+        return urlBase + "/signup";
     }
 
     static withPath(path) {

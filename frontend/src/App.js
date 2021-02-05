@@ -19,25 +19,25 @@ import CreateAccount from './CreateAccount.js';
 import { useCookies } from 'react-cookie';
 
 const useStyles = makeStyles((theme) => ({
-  root: {
-    flexGrow: 1,
-  },
-  menuButton: {
-    marginRight: theme.spacing(2),
-  },
-  title: {
-    flexGrow: 1,
-  },
-  spaced: {
-    paddingTop: theme.spacing(4),
-  },
+    root: {
+        flexGrow: 1,
+    },
+    menuButton: {
+        marginRight: theme.spacing(2),
+    },
+    title: {
+        flexGrow: 1,
+    },
+    spaced: {
+        paddingTop: theme.spacing(4),
+    },
 }));
 
 function App() {
     const classes = useStyles();
 
     const [cookies] = useCookies(['auth']);
-    
+
     return (
         <Router>
             <AppBar>
@@ -49,11 +49,11 @@ function App() {
                         Random Tables Web
                     </Typography>
                     <Button color="inherit" component={Link} to="/">Home</Button>
-                    { !cookies.auth && 
-                        <Button color="inherit" component={Link} to="/createAccount">Sign up</Button>
+                    {!cookies.auth &&
+                        <Button color="inherit" component={Link} to="/signup">Sign up</Button>
                     }
-                    { cookies.auth && 
-                        <Button color="inherit" component={Link} to="/createAccount">Log out</Button>
+                    {cookies.auth &&
+                        <Button color="inherit" component={Link} to="/signup">Log out</Button>
                     }
                 </Toolbar>
             </AppBar>
@@ -66,7 +66,7 @@ function App() {
                     <Route path="/account/:accountId">
                         <AccountPage />
                     </Route>
-                    <Route path="/createAccount">
+                    <Route path="/signup">
                         <CreateAccount />
                     </Route>
                 </Switch>

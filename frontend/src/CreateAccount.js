@@ -7,6 +7,7 @@ import {
 } from '@material-ui/core';
 import { createStyles, withStyles } from '@material-ui/core/styles';
 import BackendURLBuilder from './BackendURLBuilder';
+import { Redirect } from 'react-router-dom';
 
 const styles = (theme) => createStyles({
     root: {
@@ -29,20 +30,21 @@ class CreateAccount extends React.Component {
             name: "",
             password: "",
             error: null,
+            redirect: false,
         };
 
         this.onSubmit = this.onSubmit.bind(this);
     }
-    
+
     onSubmit(event) {
         const url = BackendURLBuilder.createAccount();
-        const data = { name: this.state.name, password: this.state.password};
+        const data = { username: this.state.name, password: this.state.password };
         axios.post(url, data, { withCredentials: true }).then(
             (result) => {
-                
+                this.setState({ redirect: true });
             },
             (error) => {
-                this.setState({error: error});
+                this.setState({ error: error });
             }
         );
         event.preventDefault();
@@ -65,16 +67,16 @@ class CreateAccount extends React.Component {
             <Container maxWidth="sm">
                 <form id="create-account" className={this.classes.root} noValidate autoComplete="off">
                     <div>
-                        <TextField 
-                            required 
-                            label="Account Name" 
+                        <TextField
+                            required
+                            label="Account Name"
                             value={this.state.name}
                             onChange={handleNameChange}
                             variant="outlined"
                         />
-                        <TextField 
-                            required 
-                            label="Password" 
+                        <TextField
+                            required
+                            label="Password"
                             value={this.state.password}
                             onChange={handlePasswordChange}
                             type="password"
@@ -82,8 +84,8 @@ class CreateAccount extends React.Component {
                         />
                     </div>
                     <div>
-                        <Button 
-                            variant="contained" 
+                        <Button
+                            variant="contained"
                             form="create-account"
                             onClick={this.onSubmit}
                         >
@@ -92,6 +94,7 @@ class CreateAccount extends React.Component {
                     </div>
                 </form>
                 {error}
+                { this.state.redirect && <Redirect to="/" />}
             </Container>
         );
     }
