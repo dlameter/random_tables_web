@@ -10,6 +10,9 @@ export default function LoginForm(props) {
     const [redirect, setRedirect] = useState(false);
 
     const auth = useAuth();
+    if (auth.user) {
+        return <Redirect to="/" />;
+    }
 
     function onSubmit(e) {
         auth.login(username, password).then((result) => { setRedirect(true) }, (error) => { setError(error) });
