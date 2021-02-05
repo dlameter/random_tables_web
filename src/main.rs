@@ -56,17 +56,29 @@ fn do_login(
     mut session: session::Session,
     login_data: LoginData,
 ) -> Result<Response<String>, Rejection> {
-    if let Some(cookie) = session.authenticate(&login_data.username, &login_data.password) {
-        Response::builder()
-            .header("set-cookie", format!("EXAUTH={}", cookie))
+    let cookie = session.authenticate(&login_data.username, &login_data.password);
+    let body = session
+        .account()
+        .as_ref()
+        .ok_or("Account not found".to_string())
+        .and_then(|account| {
+            serde_json::to_string(&account)
+                .map_err(|error| format!("Failed to create json string for account: {}", error))
+        });
+
+    match body {
+        Ok(body) => Response::builder()
+            .header("set-cookie", format!("EXAUTH={}", cookie.unwrap()))
             .status(warp::http::StatusCode::OK)
-            .body("".to_string())
-            .map_err(|error| warp::reject::reject())
-    } else {
-        Response::builder()
-            .status(warp::http::StatusCode::NOT_FOUND)
-            .body("".to_string())
-            .map_err(|error| warp::reject::reject())
+            .body(body)
+            .map_err(|error| warp::reject::reject()),
+        Err(error) => {
+            println!("Failed to find account: {}", error);
+            Response::builder()
+                .status(warp::http::StatusCode::NOT_FOUND)
+                .body("".to_string())
+                .map_err(|error| warp::reject::reject())
+        }
     }
 }
 
