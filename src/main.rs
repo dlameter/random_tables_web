@@ -100,12 +100,14 @@ fn do_signup(
         .validate()
         .map_err(|error| error.to_string())
         .and_then(|signup_data| {
+            let hash = bcrypt::hash(&signup_data.password, bcrypt::DEFAULT_COST)
+                .map_err(|error| format!("Failed to hash password: {}", error))?;
+            Ok((hash, signup_data))
+        })
+        .and_then(|(hash, signup_data)| {
             use random_tables_web::schema::accounts::dsl::*;
             diesel::insert_into(accounts)
-                .values((
-                    username.eq(&signup_data.username),
-                    password_hash.eq(&signup_data.password),
-                ))
+                .values((username.eq(&signup_data.username), password_hash.eq(&hash)))
                 .execute(session.connection())
                 .map_err(|error| format!("{:?}", error).to_string())
         });
