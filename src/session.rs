@@ -93,11 +93,11 @@ impl Session {
         self.account = None;
     }
 
-    pub fn logged_in(&self) -> bool {
+    pub fn logged_in(&self) -> Option<&Account> {
         if self.account.is_some() && self.id.is_some() {
-            return true;
+            return self.account().as_ref();
         }
-        false
+        None
     }
 
     pub fn connection(&self) -> &PooledPg {

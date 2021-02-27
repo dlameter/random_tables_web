@@ -39,14 +39,29 @@ async fn main() {
         .and(warp::path::end())
         .and(session_closure())
         .and_then(|session| async move { do_whois(session) });
-    let update_account = warp::put()
-        .and(warp::path!("account" / i32))
+    let edit_name = warp::put()
+        .and(warp::path!("change-username"))
         .and(warp::path::end())
         .and(session_closure())
         .and(warp::body::json())
-        .and_then(|id, session, edit_data| async move { edit_account(session, id, edit_data) });
+        .and_then(|session, data: ChangeUsernameData| async move {
+            change_username(&session, &data.username)
+        });
+    let edit_pass = warp::put()
+        .and(warp::path!("change-password"))
+        .and(warp::path::end())
+        .and(session_closure())
+        .and(warp::body::json())
+        .and_then(|session, data: ChangePasswordData| async move {
+            change_username(&session, &data.password)
+        });
 
-    let auth = login.or(logout).or(signup).or(whois);
+    let auth = login
+        .or(logout)
+        .or(signup)
+        .or(whois)
+        .or(edit_name)
+        .or(edit_pass);
 
     let routes = auth.with(cors);
 
@@ -143,14 +158,12 @@ fn do_signup(
 }
 
 fn do_whois(session: session::Session) -> Result<Response<String>, Rejection> {
-    if session.logged_in() {
-        if let Some(account) = session.account() {
-            if let Ok(string) = serde_json::to_string(account) {
-                return Response::builder()
-                    .status(warp::http::StatusCode::OK)
-                    .body(string)
-                    .map_err(|error| warp::reject());
-            }
+    if let Some(account) = session.logged_in() {
+        if let Ok(string) = serde_json::to_string(account) {
+            return Response::builder()
+                .status(warp::http::StatusCode::OK)
+                .body(string)
+                .map_err(|error| warp::reject());
         }
     }
     Response::builder()
@@ -160,109 +173,98 @@ fn do_whois(session: session::Session) -> Result<Response<String>, Rejection> {
 }
 
 #[derive(Deserialize)]
-struct EditAccountData {
-    username: Option<String>,
-    password: Option<String>,
+struct ChangeUsernameData {
+    username: String,
 }
 
-impl EditAccountData {
-    fn is_empty(&self) -> bool {
-        self.username.is_none() && self.password.is_none()
-    }
-}
-
-fn edit_account(
-    session: session::Session,
-    account_id: i32,
-    edit_data: EditAccountData,
+fn change_username(
+    session: &session::Session,
+    new_username: &String,
 ) -> Result<Response<String>, Rejection> {
-    if session.logged_in() {
-        if let Some(session_account) = session.account() {
-            if !edit_data.is_empty() {
-                if session_account.id == account_id {
-                    let mut errors: Vec<String> = vec![];
-                    use random_tables_web::schema::accounts::dsl::*;
-                    let update = diesel::update(accounts).filter(id.eq(account_id));
+    if let Some(account) = session.logged_in() {
+        use random_tables_web::schema::accounts::dsl::*;
 
-                    let mut result_username = None;
-                    if let Some(new_username) = edit_data.username {
-                        result_username = Some(
-                            update
-                                .set(username.eq(new_username))
-                                .returning(username)
-                                .get_result::<String>(session.connection()),
-                        );
-                    }
+        let update = diesel::update(accounts).filter(id.eq(account.id));
 
-                    let mut result_password = None; // Option<Result<String, diesel::Error>>
-                    if let Some(new_password) = edit_data.password {
-                        let new_password = bcrypt::hash(&new_password, bcrypt::DEFAULT_COST);
+        let result = update
+            .set(username.eq(new_username))
+            .returning(username)
+            .get_result::<String>(session.connection())
+            .map_err(|error| {
+                format!(
+                    "Failed to update username for account with id={}: {}",
+                    account.id, error
+                )
+            })
+            .and_then(|update_username| {
+                let updated_account = data::account::Account {
+                    id: account.id,
+                    username: update_username.clone(),
+                };
 
-                        match new_password {
-                            Ok(new_password) => {
-                                result_password = Some(
-                                    update
-                                        .set(password_hash.eq(new_password))
-                                        .returning(password_hash)
-                                        .get_result::<String>(session.connection()),
-                                );
-                            }
-                            Err(error) => errors.push(format!("{}", error).to_string()),
-                        }
-                    }
+                serde_json::to_string(&updated_account)
+                    .map_err(|error| format!("Failed to create JSON string of account: {}", error))
+            });
 
-                    let mut result_account = data::account::Account {
-                        id: account_id,
-                        username: session_account.username.clone(),
-                    };
+        let response = match result {
+            Ok(response_string) => Response::builder()
+                .status(warp::http::StatusCode::OK)
+                .body(response_string),
+            Err(error_string) => Response::builder()
+                .status(warp::http::StatusCode::INTERNAL_SERVER_ERROR)
+                .body(error_string),
+        };
 
-                    result_username.and_then(|result| {
-                        let err = result.and_then(|new_username| {
-                            result_account.username = new_username;
-                            Ok(())
-                        });
-                        if let Err(err) = err {
-                            let error = format!("{}", err).to_string();
-                            errors.push(error.clone());
-                            return Some(error);
-                        }
-                        None
-                    });
-
-                    result_password.and_then(|result| {
-                        let err = result.and_then(|new_password| Ok(()));
-                        if let Err(err) = err {
-                            let error = format!("{}", err).to_string();
-                            errors.push(error.clone());
-                            return Some(error);
-                        }
-                        None
-                    });
-
-                    if errors.is_empty() {
-                        return Response::builder()
-                            .status(warp::http::StatusCode::INTERNAL_SERVER_ERROR)
-                            .body(
-                                serde_json::to_string(&errors)
-                                    .unwrap_or("Failed to JSON-ify errors.".to_string()),
-                            )
-                            .map_err(|error| warp::reject());
-                    } else {
-                        return Response::builder()
-                            .status(warp::http::StatusCode::OK)
-                            .body(
-                                serde_json::to_string(&result_account).unwrap_or(
-                                    "Failed to create JSON for updated data.".to_string(),
-                                ),
-                            )
-                            .map_err(|error| warp::reject());
-                    }
-                }
-            }
-        }
+        return response.map_err(|error| warp::reject());
     }
     Response::builder()
         .status(warp::http::StatusCode::UNAUTHORIZED)
-        .body(String::new())
+        .body("No user logged in".to_string())
+        .map_err(|error| warp::reject())
+}
+
+#[derive(Deserialize)]
+struct ChangePasswordData {
+    password: String,
+}
+
+fn change_password(
+    session: &session::Session,
+    new_password: &String,
+) -> Result<Response<String>, Rejection> {
+    if let Some(account) = session.logged_in() {
+        use random_tables_web::schema::accounts::dsl::*;
+
+        let update = diesel::update(accounts).filter(id.eq(account.id));
+        let new_password_hash = bcrypt::hash(new_password, bcrypt::DEFAULT_COST)
+            .map_err(|error| format!("Failed to hash password: {}", error));
+
+        let result = new_password_hash.and_then(|new_password_hash| {
+            update
+                .set(password_hash.eq(new_password_hash))
+                .execute(session.connection())
+                .map(|rows| (rows > 0).to_string())
+                .map_err(|error| {
+                    format!(
+                        "Failed to update password for account with id={}: {}",
+                        account.id, error
+                    )
+                })
+        });
+
+        let response = match result {
+            Ok(response_string) => Response::builder()
+                .status(warp::http::StatusCode::OK)
+                .body(response_string),
+            Err(error_string) => Response::builder()
+                .status(warp::http::StatusCode::INTERNAL_SERVER_ERROR)
+                .body(error_string),
+        };
+
+        return response.map_err(|error| warp::reject());
+    }
+    Response::builder()
+        .status(warp::http::StatusCode::UNAUTHORIZED)
+        .body("No user logged in".to_string())
         .map_err(|error| warp::reject())
 }
