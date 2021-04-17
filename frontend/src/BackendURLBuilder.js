@@ -24,6 +24,10 @@ class BackendURLBuilder {
     static whois() {
         return urlBase + "/whois"
     }
+
+    static changePassword() {
+        return urlBase + "/change-password"
+    }
 }
 
 export default BackendURLBuilder;

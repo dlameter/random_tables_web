@@ -18,6 +18,8 @@ import { AccountPage } from './Account.js';
 import CreateAccount from './CreateAccount.js';
 import LoginForm from './LoginForm.js';
 import { useAuth } from './auth.js';
+import EditAccount from './EditAccount.js';
+import ChangePasswordForm from './ChangePassword.js';
 
 const useStyles = makeStyles((theme) => ({
     root: {
@@ -53,13 +55,14 @@ function App() {
                     {auth.user ? (
                         <>
                             <Button color="inherit" onClick={() => auth.logout()}>Log out</Button>
+                            <Button color="inherit" component={Link} to="/account">Account</Button>
                         </>
                     ) : (
-                            <>
-                                <Button color="inherit" component={Link} to="/login">Login</Button>
-                                <Button color="inherit" component={Link} to="/signup">Sign up</Button>
-                            </>
-                        )}
+                        <>
+                            <Button color="inherit" component={Link} to="/login">Login</Button>
+                            <Button color="inherit" component={Link} to="/signup">Sign up</Button>
+                        </>
+                    )}
                 </Toolbar>
             </AppBar>
             <Toolbar></Toolbar>
@@ -68,13 +71,19 @@ function App() {
                     <Route exact path="/">
                         <Home />
                     </Route>
-                    <Route path="/account/:accountId">
+                    <Route exact path="/account/">
+                        <EditAccount />
+                    </Route>
+                    <Route exact path="/account/password">
+                        <ChangePasswordForm></ChangePasswordForm>
+                    </Route>
+                    <Route path="/account/id/:accountId">
                         <AccountPage />
                     </Route>
-                    <Route path="/signup">
+                    <Route exact path="/signup">
                         <CreateAccount />
                     </Route>
-                    <Route path="/login">
+                    <Route exact path="/login">
                         <LoginForm />
                     </Route>
                 </Switch>

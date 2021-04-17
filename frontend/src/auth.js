@@ -36,11 +36,18 @@ function useProvideAuth() {
         return axios.get(url, { withCredentials: true }).then((response) => { setUser(response.data); return response; })
     }
 
+    // Might want to consider requiring re-entering the old password for extra protection
+    const changePassword = (password) => {
+        const url = BackendURLBuilder.changePassword()
+        const data = { password: password }
+        return axios.put(url, data, { withCredentials: true });
+    }
+
     useEffect(() => {
         if (cookies.EXAUTH) {
             whois();
         }
     }, [cookies.EXAUTH]);
 
-    return { user, login, logout };
+    return { user, login, logout, changePassword };
 }
